@@ -24,29 +24,39 @@ window.addEventListener('resize', function () { onWindowResize(camera, renderer)
 let axesHelper = new THREE.AxesHelper(12);
 scene.add(axesHelper);
 
-const planeMesh = new THREE.Mesh(
+const plane = new THREE.Mesh(
   new THREE.PlaneGeometry(10, 10),
   new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
-  
+    visible: false
   })
 );
-planeMesh.rotateX(-Math.PI / 2);
-scene.add(planeMesh);
+plane.rotateX(-Math.PI / 2);
+scene.add(plane);
 
 const grid = new THREE.GridHelper(10, 10);
 scene.add(grid);
 
-const highlightMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(1, 1),
-  new THREE.MeshBasicMaterial({
-    side: THREE.DoubleSide,
-    transparent: true
-  })
-);
-highlightMesh.rotateX(-Math.PI / 2);
-highlightMesh.position.set(0.5, 0, 0.5);
-scene.add(highlightMesh);
+// const highlightMesh = new THREE.Mesh(
+//   new THREE.PlaneGeometry(1, 1),
+//   new THREE.MeshBasicMaterial({
+//     side: THREE.DoubleSide,
+//     transparent: true
+//   })
+// );
+// highlightMesh.rotateX(-Math.PI / 2);
+// highlightMesh.position.set(0.5, 0, 0.5);
+// scene.add(highlightMesh);
+
+const boxWireframe = new THREE.BoxGeometry(1,1,1);
+const wireframe = new THREE.WireframeGeometry( boxWireframe );
+
+const line = new THREE.LineSegments( wireframe );
+line.material.depthTest = false;
+line.material.opacity = 0.5;
+line.position.set(0.5,0.5,0.5)
+
+scene.add( line );
 
 // Use this to show information onscreen
 let controls = new InfoBox();
