@@ -60,7 +60,6 @@ scene.add(line);
 
 
 addEventListener('keydown', (e) => {
-  console.log(line.position);
   switch (e.key) {
     case 'ArrowDown':
       line.position.z <= 3.5 && line.translateZ(1);
@@ -97,8 +96,8 @@ controls.add("* Movimentação no plano XZ: Setas direcionais do teclado.");
 controls.add("* Movimentação em Y: PgUp e PgDown.");
 controls.add("* Inserir voxel: 'Q'.");
 controls.add("* Remover voxel: 'E'.");
-controls.add("* Remover voxel: '.'.");
-controls.add("* Remover voxel: ','.");
+controls.add("* Próximo tipo de voxel: '.'.");
+controls.add("* Tipo anterior de voxel: ','.");
 
 render();
 function render() {
