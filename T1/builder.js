@@ -16,6 +16,7 @@ camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this positi
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
+let heightIndicatorStack = []
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -58,6 +59,19 @@ line.material.opacity = 0.5;
 line.position.set(0.5, 0.5, 0.5)
 scene.add(line);
 
+function addHeightIndicator() {
+  const sphereGeometry = new THREE.SphereGeometry(0.1);
+  const sphereMaterial = setDefaultMaterial('rgb(200,200,200)')
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+  heightIndicatorStack.push(sphere)
+  sphere.translateY(-1 * heightIndicatorStack.length)
+  line.add(sphere)
+}
+
+function removeHeighIndicator() {
+  const sphere = heightIndicatorStack.pop()
+  line.remove(sphere)
+}
 
 addEventListener('keydown', (e) => {
   switch (e.key) {
@@ -74,10 +88,18 @@ addEventListener('keydown', (e) => {
       line.position.x <= 3.5 && line.translateX(1);
       break;
     case 'PageDown':
-      line.position.y > 0.5 && line.translateY(-1);
+      if(line.position.y > 0.5) {
+        line.translateY(-1);
+        removeHeighIndicator()
+      }
       break;
     case 'PageUp':
-      line.position.y < 10.5 && line.translateY(1);
+      if(line.position.y < 10.5) {
+        line.translateY(1);
+        addHeightIndicator()
+      }
+      break;
+    case 'e':
       break;
   }
 })
