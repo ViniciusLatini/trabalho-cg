@@ -66,11 +66,13 @@ function addHeightIndicator() {
   heightIndicatorStack.push(sphere)
   sphere.translateY(-1 * heightIndicatorStack.length)
   line.add(sphere)
+  line.translateY(1);
 }
 
 function removeHeighIndicator() {
   const sphere = heightIndicatorStack.pop()
   line.remove(sphere)
+  line.translateY(-1);
 }
 
 addEventListener('keydown', (e) => {
@@ -88,16 +90,10 @@ addEventListener('keydown', (e) => {
       line.position.x <= 3.5 && line.translateX(1);
       break;
     case 'PageDown':
-      if(line.position.y > 0.5) {
-        line.translateY(-1);
-        removeHeighIndicator()
-      }
+      line.position.y > 0.5 && removeHeighIndicator()
       break;
     case 'PageUp':
-      if(line.position.y < 10.5) {
-        line.translateY(1);
-        addHeightIndicator()
-      }
+      line.position.y < 10.5 && addHeightIndicator()
       break;
     case 'e':
       break;
