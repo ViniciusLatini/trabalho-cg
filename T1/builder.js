@@ -8,6 +8,7 @@ import {
   InfoBox,
   onWindowResize
 } from "../libs/util/util.js";
+import { voxelsTypes } from './utils/voxelsTypes.js'
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -17,6 +18,7 @@ material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
 let heightIndicatorStack = []
+let currentVox = 0
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -52,8 +54,13 @@ scene.add(grid);
 // Criação do cubo preview (Wireframe)
 const boxWireframe = new THREE.BoxGeometry(1, 1, 1);
 const wireframe = new THREE.WireframeGeometry(boxWireframe);
-
-const line = new THREE.LineSegments(wireframe);
+const wireframeMaterial = new THREE.LineBasicMaterial({
+  color: voxelsTypes[currentVox],
+  depthTest: false,
+  opacity: 0.5,
+  transparent: true
+});
+const line = new THREE.LineSegments(wireframe, wireframeMaterial);
 line.material.depthTest = false;
 line.material.opacity = 0.5;
 line.position.set(0.5, 0.5, 0.5)
@@ -73,6 +80,15 @@ function removeHeighIndicator() {
   const sphere = heightIndicatorStack.pop()
   line.remove(sphere)
   line.translateY(-1);
+}
+
+function changeVoxType(increment) {
+  currentVox += increment
+  if (currentVox === voxelsTypes.length)
+    currentVox = 0
+  else if (currentVox === -1)
+    currentVox = voxelsTypes.length - 1
+  wireframeMaterial.color.set(voxelsTypes[currentVox])
 }
 
 addEventListener('keydown', (e) => {
@@ -96,6 +112,12 @@ addEventListener('keydown', (e) => {
       line.position.y < 10.5 && addHeightIndicator()
       break;
     case 'e':
+      break;
+    case '.':
+      changeVoxType(1)
+      break;
+    case ',':
+      changeVoxType(-1)
       break;
   }
 })
