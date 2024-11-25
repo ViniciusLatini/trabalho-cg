@@ -19,6 +19,7 @@ light = initDefaultBasicLight(scene); // Create a basic light to illuminate the 
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
 let heightIndicatorStack = []
 let currentVox = 0
+let voxels = {}
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -91,6 +92,29 @@ function changeVoxType(increment) {
   wireframeMaterial.color.set(voxelsTypes[currentVox])
 }
 
+function hashPosition(position) {
+  const { x, y, z } = position
+  return `${x},${y},${z}`
+}
+
+function createVoxel() {
+  const hash = hashPosition(line.position)
+  // Verifica se já existe voxel nessa posição
+  if (voxels[hash])
+    return
+
+  // Criação do voxel
+  const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
+  const cubeMaterial = setDefaultMaterial(voxelsTypes[currentVox])
+  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  const { x, y, z } = line.position // Capturando posição do wireframe
+  // Inserindo voxel na posição do wireframe
+  cube.position.set(x, y, z) 
+  // Inserindo voxel na hashTable sendo tendo a posição x,y,z como chave
+  voxels[hash] = cube 
+  scene.add(cube)
+}
+
 addEventListener('keydown', (e) => {
   switch (e.key) {
     case 'ArrowDown':
@@ -111,7 +135,11 @@ addEventListener('keydown', (e) => {
     case 'PageUp':
       line.position.y < 10.5 && addHeightIndicator()
       break;
-    case 'e':
+    case 'q':
+      createVoxel()
+      break;
+    case 'Q':
+      createVoxel()
       break;
     case '.':
       changeVoxType(1)
