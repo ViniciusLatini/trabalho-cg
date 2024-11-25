@@ -9,6 +9,7 @@ import {
   onWindowResize
 } from "../libs/util/util.js";
 import { voxelsTypes } from './utils/voxelsTypes.js'
+import GUI from '../libs/util/dat.gui.module.js';
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -167,6 +168,35 @@ addEventListener('keydown', (e) => {
   }
 })
 
+function buildInterface() {
+  var controls = new function () {
+    this.reset = function () {
+      Object.values(voxels).forEach(item => scene.remove(item))
+    };
+    this.save = () => {
+      const jsonString = JSON.stringify(voxels, null, 1)
+      const blob = new Blob([jsonString], { type: "application/json" });
+       // Cria um link de download
+       const link = document.createElement("a");
+       link.href = URL.createObjectURL(blob);
+       link.download = "dados.json";
+
+       
+       // Aciona o download
+       link.click();
+
+       // Libera a memória usada pelo Blob
+       URL.revokeObjectURL(link.href);
+    }
+  };
+
+  let gui = new GUI();
+  let folder = gui.addFolder("Builder Options");
+  folder.open();
+  folder.add(controls, 'save').name("SALVAR");
+  folder.add(controls, 'reset').name("RESET");
+}
+
 // Use this to show information onscreen
 let controls = new InfoBox();
 controls.add("Builder");
@@ -185,6 +215,7 @@ controls.add("* Próximo tipo de voxel: '.'.");
 controls.add("* Tipo anterior de voxel: ','.");
 
 render();
+buildInterface();
 function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera) // Render scene
