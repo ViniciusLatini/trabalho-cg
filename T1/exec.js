@@ -24,13 +24,9 @@ let voxels = {}
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
 
-// Show axes (parameter is size of each axis)
-let axesHelper = new THREE.AxesHelper(12);
-scene.add(axesHelper);
-
 // Criação do plano quadriculado
 const plane = new THREE.Mesh(
-  new THREE.PlaneGeometry(10, 10),
+  new THREE.PlaneGeometry(35, 35),
   new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
     visible: false
@@ -38,8 +34,11 @@ const plane = new THREE.Mesh(
 );
 plane.rotateX(-Math.PI / 2);
 scene.add(plane);
-const grid = new THREE.GridHelper(10, 10);
+const grid = new THREE.GridHelper(35, 35);
 scene.add(grid);
+
+// Criação da matriz de definição do terreno
+
 
 // const highlightMesh = new THREE.Mesh(
 //   new THREE.PlaneGeometry(1, 1),
