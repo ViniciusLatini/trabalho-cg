@@ -37,8 +37,13 @@ scene.add(plane);
 const grid = new THREE.GridHelper(35, 35);
 scene.add(grid);
 
-// Criação da matriz de definição do terreno
+// Criação da matriz de terreno
+let matrixTerrain = [[]];
 
+// Função para criar a matriz de strings
+
+
+console.log(matrixTerrain);
 
 // const highlightMesh = new THREE.Mesh(
 //   new THREE.PlaneGeometry(1, 1),
