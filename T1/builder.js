@@ -109,10 +109,21 @@ function createVoxel() {
   const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
   const { x, y, z } = line.position // Capturando posição do wireframe
   // Inserindo voxel na posição do wireframe
-  cube.position.set(x, y, z) 
+  cube.position.set(x, y, z)
   // Inserindo voxel na hashTable sendo tendo a posição x,y,z como chave
-  voxels[hash] = cube 
+  voxels[hash] = cube
   scene.add(cube)
+}
+
+function removeVoxel() {
+  const hash = hashPosition(line.position)
+  // Verifica se existe um voxel nessa posição do wireframe
+  if (!voxels[hash])
+    return
+
+  // Remove Voxel da cena e da hashTable
+  scene.remove(voxels[hash])
+  delete voxels[hash]
 }
 
 addEventListener('keydown', (e) => {
@@ -140,6 +151,12 @@ addEventListener('keydown', (e) => {
       break;
     case 'Q':
       createVoxel()
+      break;
+    case 'e':
+      removeVoxel()
+      break;
+    case 'E':
+      removeVoxel()
       break;
     case '.':
       changeVoxType(1)
