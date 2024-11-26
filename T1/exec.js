@@ -9,6 +9,7 @@ import {
   onWindowResize
 } from "../libs/util/util.js";
 import { voxelsTypes } from './utils/voxelsTypes.js'
+import { rows } from './utils/map.js'
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -24,6 +25,47 @@ let voxels = {}
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
 
+// Create terrain function
+const terrainColor = ['rgb(0,200,0)', 'rgb(255,150,0)', 'rgb(255,255,255)'];
+function createTerrainBlock(type, x, z) {
+  const geometry = new THREE.BoxGeometry;
+  const material = setDefaultMaterial(terrainColor[type]);
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.set(x, 0.5 + type, z);
+  scene.add(cube);
+}
+
+function createTerrain(){
+  let posX = -17.0;
+  let posZ = -17.0;
+  rows.map(row => {
+    for(let i=0; i<=row.n2L; i++){
+      createTerrainBlock(2, posX, posZ);
+      posX++;
+      console.log("N2L BLOCK")
+    }
+    for(let i=row.n2L+1; i<=row.n1L; i++){
+      createTerrainBlock(1, posX, posZ);
+      posX++;
+    }
+    for(let i=row.n1L+1; i<=row.n0; i++){
+      createTerrainBlock(0, posX, posZ);
+      posX++;
+    }
+    for(let i=row.n0+1; i<=row.n1R; i++){
+      createTerrainBlock(1, posX, posZ);
+      posX++;
+    }
+    for(let i=row.n1R+1; i<=row.n2R; i++){
+      createTerrainBlock(2, posX, posZ);
+      posX++;
+    }
+    posX = -17.0;
+    posZ++;
+    console.log(rows);
+  })
+}
+
 // Criação do plano quadriculado
 const plane = new THREE.Mesh(
   new THREE.PlaneGeometry(35, 35),
@@ -38,12 +80,7 @@ const grid = new THREE.GridHelper(35, 35);
 scene.add(grid);
 
 // Criação da matriz de terreno
-let matrixTerrain = [[]];
-
-// Função para criar a matriz de strings
-
-
-console.log(matrixTerrain);
+createTerrain();
 
 // const highlightMesh = new THREE.Mesh(
 //   new THREE.PlaneGeometry(1, 1),
