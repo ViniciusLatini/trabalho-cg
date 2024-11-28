@@ -8,7 +8,6 @@ import {
   InfoBox,
   onWindowResize
 } from "../libs/util/util.js";
-import { voxelsTypes } from './utils/voxelsTypes.js'
 import { rows } from './utils/map.js'
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
@@ -18,9 +17,6 @@ camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this positi
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
-let heightIndicatorStack = []
-let currentVox = 0
-let voxels = {}
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -35,36 +31,54 @@ function createTerrainBlock(type, x, z) {
   scene.add(cube);
 }
 
-function createTerrain(){
+function createTerrain() {
   let posX = -17.0;
   let posZ = -17.0;
   rows.map(row => {
-    for(let i=0; i<=row.n2L; i++){
+    for (let i = 0; i <= row.n2L; i++) {
       createTerrainBlock(2, posX, posZ);
       posX++;
-      console.log("N2L BLOCK")
     }
-    for(let i=row.n2L+1; i<=row.n1L; i++){
+    for (let i = row.n2L + 1; i <= row.n1L; i++) {
       createTerrainBlock(1, posX, posZ);
       posX++;
     }
-    for(let i=row.n1L+1; i<=row.n0; i++){
+    for (let i = row.n1L + 1; i <= row.n0; i++) {
       createTerrainBlock(0, posX, posZ);
       posX++;
     }
-    for(let i=row.n0+1; i<=row.n1R; i++){
+    for (let i = row.n0 + 1; i <= row.n1R; i++) {
       createTerrainBlock(1, posX, posZ);
       posX++;
     }
-    for(let i=row.n1R+1; i<=row.n2R; i++){
+    for (let i = row.n1R + 1; i <= row.n2R; i++) {
       createTerrainBlock(2, posX, posZ);
       posX++;
     }
     posX = -17.0;
     posZ++;
-    console.log(rows);
   })
 }
+
+const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+
+function loadTrees() {
+  fetch("./trees/a1.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: 12.5, y: 1, z: -1.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
+}
+
 
 // Criação do plano quadriculado
 const plane = new THREE.Mesh(
@@ -81,132 +95,7 @@ scene.add(grid);
 
 // Criação da matriz de terreno
 createTerrain();
-
-// const highlightMesh = new THREE.Mesh(
-//   new THREE.PlaneGeometry(1, 1),
-//   new THREE.MeshBasicMaterial({
-//     side: THREE.DoubleSide,
-//     transparent: true
-//   })
-// );
-// highlightMesh.rotateX(-Math.PI / 2);
-// highlightMesh.position.set(0.5, 0, 0.5);
-// scene.add(highlightMesh);
-
-// Criação do cubo preview (Wireframe)
-const boxWireframe = new THREE.BoxGeometry(1, 1, 1);
-const wireframe = new THREE.WireframeGeometry(boxWireframe);
-const wireframeMaterial = new THREE.LineBasicMaterial({
-  color: voxelsTypes[currentVox],
-  depthTest: false,
-  opacity: 0.5,
-  transparent: true
-});
-const line = new THREE.LineSegments(wireframe, wireframeMaterial);
-line.material.depthTest = false;
-line.material.opacity = 0.5;
-line.position.set(0.5, 0.5, 0.5)
-scene.add(line);
-
-function addHeightIndicator() {
-  const sphereGeometry = new THREE.SphereGeometry(0.1);
-  const sphereMaterial = setDefaultMaterial('rgb(200,200,200)')
-  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
-  heightIndicatorStack.push(sphere)
-  sphere.translateY(-1 * heightIndicatorStack.length)
-  line.add(sphere)
-  line.translateY(1);
-}
-
-function removeHeighIndicator() {
-  const sphere = heightIndicatorStack.pop()
-  line.remove(sphere)
-  line.translateY(-1);
-}
-
-function changeVoxType(increment) {
-  currentVox += increment
-  if (currentVox === voxelsTypes.length)
-    currentVox = 0
-  else if (currentVox === -1)
-    currentVox = voxelsTypes.length - 1
-  wireframeMaterial.color.set(voxelsTypes[currentVox])
-}
-
-function hashPosition(position) {
-  const { x, y, z } = position
-  return `${x},${y},${z}`
-}
-
-function createVoxel() {
-  const hash = hashPosition(line.position)
-  // Verifica se já existe voxel nessa posição
-  if (voxels[hash])
-    return
-
-  // Criação do voxel
-  const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
-  const cubeMaterial = setDefaultMaterial(voxelsTypes[currentVox])
-  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-  const { x, y, z } = line.position // Capturando posição do wireframe
-  // Inserindo voxel na posição do wireframe
-  cube.position.set(x, y, z)
-  // Inserindo voxel na hashTable sendo tendo a posição x,y,z como chave
-  voxels[hash] = cube
-  scene.add(cube)
-}
-
-function removeVoxel() {
-  const hash = hashPosition(line.position)
-  // Verifica se existe um voxel nessa posição do wireframe
-  if (!voxels[hash])
-    return
-
-  // Remove Voxel da cena e da hashTable
-  scene.remove(voxels[hash])
-  delete voxels[hash]
-}
-
-addEventListener('keydown', (e) => {
-  switch (e.key) {
-    case 'ArrowDown':
-      line.position.z <= 3.5 && line.translateZ(1);
-      break;
-    case 'ArrowUp':
-      line.position.z >= -3.5 && line.translateZ(-1);
-      break;
-    case 'ArrowLeft':
-      line.position.x >= -3.5 && line.translateX(-1);
-      break;
-    case 'ArrowRight':
-      line.position.x <= 3.5 && line.translateX(1);
-      break;
-    case 'PageDown':
-      line.position.y > 0.5 && removeHeighIndicator()
-      break;
-    case 'PageUp':
-      line.position.y < 10.5 && addHeightIndicator()
-      break;
-    case 'q':
-      createVoxel()
-      break;
-    case 'Q':
-      createVoxel()
-      break;
-    case 'e':
-      removeVoxel()
-      break;
-    case 'E':
-      removeVoxel()
-      break;
-    case '.':
-      changeVoxType(1)
-      break;
-    case ',':
-      changeVoxType(-1)
-      break;
-  }
-})
+loadTrees()
 
 // Use this to show information onscreen
 let controls = new InfoBox();
@@ -217,13 +106,6 @@ controls.addParagraph();
 // controls.add("* Right button to translate (pan)");
 // controls.add("* Scroll to zoom in/out.");
 // controls.add("* Scroll to zoom in/out.");
-controls.show("Voxels");
-controls.add("* Movimentação no plano XZ: Setas direcionais do teclado.");
-controls.add("* Movimentação em Y: PgUp e PgDown.");
-controls.add("* Inserir voxel: 'Q'.");
-controls.add("* Remover voxel: 'E'.");
-controls.add("* Próximo tipo de voxel: '.'.");
-controls.add("* Tipo anterior de voxel: ','.");
 
 render();
 function render() {
