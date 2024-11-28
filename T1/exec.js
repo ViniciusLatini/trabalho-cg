@@ -159,6 +159,76 @@ function loadTrees() {
         scene.add(voxel)
       })
     })
+  fetch("./trees/a2.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: 9.5, y: 1, z: -11.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
+  fetch("./trees/a3.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: 9.5, y: 1, z: 10.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
+  fetch("./trees/a3.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: -4.5, y: 1, z: -1.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
+  fetch("./trees/a1.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: -5.5, y: 1, z: -11.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
+  fetch("./trees/a2.json")
+    .then((res) => {
+      return res.json()
+    })
+    .then(data => {
+      const ref = { x: -6.5, y: 1, z: 10.5 }
+      data.map(({ position, mesh }) => {
+        console.log(mesh);
+        const material = setDefaultMaterial(mesh.materials[0].color)
+        const voxel = new THREE.Mesh(cubeGeometry, material)
+        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+        scene.add(voxel)
+      })
+    })
 }
 
 
