@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
+import {PointerLockControls} from '../build/jsm/controls/PointerLockControls.js';
 import {
   initRenderer,
   initCamera,
@@ -10,13 +10,95 @@ import {
 } from "../libs/util/util.js";
 import { rows } from './utils/map.js'
 
-let scene, renderer, camera, material, light, orbit;; // Initial variables
+let scene, renderer, camera, material, light, orbit, controls;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
-camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position
+
+camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(3, 3, -7);
+camera.lookAt(new THREE.Vector3(0, 2, 0));
+scene.add(camera);
+
+// camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position (DEFAULT CAMERA)
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
-orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
+controls = new PointerLockControls(camera, renderer.domElement);
+const blocker = document.getElementById('blocker');
+const instructions = document.getElementById('instructions');
+
+instructions.addEventListener('click', function () {
+
+    controls.lock();
+
+}, false);
+
+controls.addEventListener('lock', function () {
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+});
+
+controls.addEventListener('unlock', function () {
+    blocker.style.display = 'block';
+    instructions.style.display = '';
+});
+scene.add(controls.getObject());
+
+const speed = 10;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let moveUp = false;
+let moveDown = false;
+
+window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
+window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
+
+function movementControls(key, value) {
+    switch (key) {
+        case 87: // W
+            moveForward = value;
+            break;
+        case 83: // S
+            moveBackward = value;
+            break;
+        case 65: // A
+            moveLeft = value;
+            break;
+        case 68: // D
+            moveRight = value;
+            break;
+        case 32:
+            moveUp = value;
+            break;
+        case 16:
+            moveDown = value;
+            break;
+    }
+}
+
+function moveAnimate(delta) {
+    if (moveForward) {
+        controls.moveForward(speed * delta);
+    }
+    else if (moveBackward) {
+        controls.moveForward(speed * -1 * delta);
+    }
+
+    if (moveRight) {
+        controls.moveRight(speed * delta);
+    }
+    else if (moveLeft) {
+        controls.moveRight(speed * -1 * delta);
+    }
+
+    if (moveUp && camera.position.y <= 100) {
+        camera.position.y += speed * delta;
+    }
+    else if (moveDown) {
+        camera.position.y -= speed * delta;
+    }
+}
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -98,17 +180,18 @@ createTerrain();
 loadTrees()
 
 // Use this to show information onscreen
-let controls = new InfoBox();
-controls.add("Builder");
-controls.addParagraph();
 // controls.add("Use mouse to interact:");
 // controls.add("* Left button to rotate");
 // controls.add("* Right button to translate (pan)");
 // controls.add("* Scroll to zoom in/out.");
 // controls.add("* Scroll to zoom in/out.");
 
+const clock = new THREE.Clock();
 render();
 function render() {
+  if (controls.isLocked) {
+    moveAnimate(clock.getDelta());
+  }
   requestAnimationFrame(render);
   renderer.render(scene, camera) // Render scene
 }
