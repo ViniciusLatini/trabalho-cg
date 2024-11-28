@@ -168,20 +168,29 @@ addEventListener('keydown', (e) => {
   }
 })
 
+function decodePosition(position) {
+  const values = position.split(',')
+  return {
+    x: Number(values[0]),
+    y: Number(values[1]),
+    z: Number(values[2]),
+  }
+}
+
 function buildInterface() {
   var controls = new function () {
     this.reset = function () {
       Object.values(voxels).forEach(item => scene.remove(item))
+      voxels = {}
     };
     this.save = () => {
-      const jsonString = JSON.stringify(voxels, null, 1)
+      const obj = Object.entries(voxels).map(item => ({ position: decodePosition(item[0]), mesh: item[1] }))
+      const jsonString = JSON.stringify(obj, null, 1)
       const blob = new Blob([jsonString], { type: "application/json" });
        // Cria um link de download
        const link = document.createElement("a");
        link.href = URL.createObjectURL(blob);
        link.download = "dados.json";
-
-       
        // Aciona o download
        link.click();
 
