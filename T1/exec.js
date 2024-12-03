@@ -74,6 +74,13 @@ function movementControls(key, value) {
     case 16:
       moveDown = value;
       break;
+    case 67: // C
+      if(!value)
+        break;
+      
+      // COMO SALVAR => localStorage.setItem('key', val) | Ex: localStorage.setItem('firstPersonCam', position)
+      // COMO RECUPERAR => localStorage.getItem('key') | Ex: localStorage.getItem('firstPersonCam')
+      break;
   }
 }
 
