@@ -21,6 +21,7 @@ orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation
 let heightIndicatorStack = []
 let currentVox = 0
 let voxels = {}
+let jsonName = 'tree'
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -190,26 +191,41 @@ function buildInterface() {
       // Cria um link de download
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "dados.json";
+      link.download = jsonName;
       // Aciona o download
       link.click();
 
       // Libera a memória usada pelo Blob
       URL.revokeObjectURL(link.href);
+    };
+    this.load = () => {
+      const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
+      fetch(`./loadTree/${jsonName}.json`)
+        .then(res => { return res.json() })
+        .then(data => {
+          data.map(({ position, mesh }) => {
+            const material = setDefaultMaterial(mesh.materials[0].color)
+            const voxel = new THREE.Mesh(cubeGeometry, material)
+            voxel.position.set(position.x, position.y, position.z)
+            scene.add(voxel)
+          })
+        })
+        .catch(error => {
+          alert('Erro ao carregar arquivo')
+        })
     }
   };
 
   let gui = new GUI();
   const params = {
-    textField: "arvore.json"
+    textField: "tree"
   }
 
-  gui.add(params, "textField").name('test').onFinishChange(function (value) {
-    console.log('value: ', value);
-  });
   let folder = gui.addFolder("Builder Options");
   folder.open();
+  folder.add(params, "textField").name('Nome arquivo').onFinishChange(value => { jsonName = value });
   folder.add(controls, 'save').name("SALVAR");
+  folder.add(controls, 'load').name("CARREGAR");
   folder.add(controls, 'reset').name("RESET");
 }
 
