@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {PointerLockControls} from '../build/jsm/controls/PointerLockControls.js';
+import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.js';
 import {
   initRenderer,
   initCamera,
@@ -28,18 +28,18 @@ const instructions = document.getElementById('instructions');
 
 instructions.addEventListener('click', function () {
 
-    controls.lock();
+  controls.lock();
 
 }, false);
 
 controls.addEventListener('lock', function () {
-    instructions.style.display = 'none';
-    blocker.style.display = 'none';
+  instructions.style.display = 'none';
+  blocker.style.display = 'none';
 });
 
 controls.addEventListener('unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
+  blocker.style.display = 'block';
+  instructions.style.display = '';
 });
 scene.add(controls.getObject());
 
@@ -55,49 +55,49 @@ window.addEventListener('keydown', (event) => movementControls(event.keyCode, tr
 window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
 
 function movementControls(key, value) {
-    switch (key) {
-        case 87: // W
-            moveForward = value;
-            break;
-        case 83: // S
-            moveBackward = value;
-            break;
-        case 65: // A
-            moveLeft = value;
-            break;
-        case 68: // D
-            moveRight = value;
-            break;
-        case 32:
-            moveUp = value;
-            break;
-        case 16:
-            moveDown = value;
-            break;
-    }
+  switch (key) {
+    case 87: // W
+      moveForward = value;
+      break;
+    case 83: // S
+      moveBackward = value;
+      break;
+    case 65: // A
+      moveLeft = value;
+      break;
+    case 68: // D
+      moveRight = value;
+      break;
+    case 32:
+      moveUp = value;
+      break;
+    case 16:
+      moveDown = value;
+      break;
+  }
 }
 
 function moveAnimate(delta) {
-    if (moveForward) {
-        controls.moveForward(speed * delta);
-    }
-    else if (moveBackward) {
-        controls.moveForward(speed * -1 * delta);
-    }
+  if (moveForward) {
+    controls.moveForward(speed * delta);
+  }
+  else if (moveBackward) {
+    controls.moveForward(speed * -1 * delta);
+  }
 
-    if (moveRight) {
-        controls.moveRight(speed * delta);
-    }
-    else if (moveLeft) {
-        controls.moveRight(speed * -1 * delta);
-    }
+  if (moveRight) {
+    controls.moveRight(speed * delta);
+  }
+  else if (moveLeft) {
+    controls.moveRight(speed * -1 * delta);
+  }
 
-    if (moveUp && camera.position.y <= 100) {
-        camera.position.y += speed * delta;
-    }
-    else if (moveDown) {
-        camera.position.y -= speed * delta;
-    }
+  if (moveUp && camera.position.y <= 100) {
+    camera.position.y += speed * delta;
+  }
+  else if (moveDown) {
+    camera.position.y -= speed * delta;
+  }
 }
 
 // Listen window size changes
@@ -144,91 +144,49 @@ function createTerrain() {
 
 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 
+const trees = [
+  {
+    path: "./trees/a1.json",
+    ref: { x: 12.5, y: 1, z: -1.5 }
+  },
+  {
+    path: "./trees/a2.json",
+    ref: { x: 9.5, y: 1, z: -11.5 }
+  },
+  {
+    path: "./trees/a3.json",
+    ref: { x: 9.5, y: 1, z: 10.5 }
+  },
+  {
+    path: "./trees/a3.json",
+    ref: { x: -4.5, y: 1, z: -1.5 }
+  },
+  {
+    path: "./trees/a1.json",
+    ref: { x: -5.5, y: 1, z: -11.5 }
+  },
+  {
+    path: "./trees/a2.json",
+    ref: { x: -6.5, y: 1, z: 10.5 }
+  },
+
+]
+
 function loadTrees() {
-  fetch("./trees/a1.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: 12.5, y: 1, z: -1.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
+  trees.map(({ path, ref }) => {
+    fetch(path)
+      .then((res) => {
+        return res.json()
       })
-    })
-  fetch("./trees/a2.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: 9.5, y: 1, z: -11.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
+      .then(data => {
+        data.map(({ position, mesh }) => {
+          const material = setDefaultMaterial(mesh.materials[0].color)
+          const voxel = new THREE.Mesh(cubeGeometry, material)
+          voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+          scene.add(voxel)
+        })
       })
-    })
-  fetch("./trees/a3.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: 9.5, y: 1, z: 10.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
-      })
-    })
-  fetch("./trees/a3.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: -4.5, y: 1, z: -1.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
-      })
-    })
-  fetch("./trees/a1.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: -5.5, y: 1, z: -11.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
-      })
-    })
-  fetch("./trees/a2.json")
-    .then((res) => {
-      return res.json()
-    })
-    .then(data => {
-      const ref = { x: -6.5, y: 1, z: 10.5 }
-      data.map(({ position, mesh }) => {
-        console.log(mesh);
-        const material = setDefaultMaterial(mesh.materials[0].color)
-        const voxel = new THREE.Mesh(cubeGeometry, material)
-        voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
-        scene.add(voxel)
-      })
-    })
+  })
 }
 
 
