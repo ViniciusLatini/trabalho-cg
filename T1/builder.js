@@ -187,19 +187,26 @@ function buildInterface() {
       const obj = Object.entries(voxels).map(item => ({ position: decodePosition(item[0]), mesh: item[1] }))
       const jsonString = JSON.stringify(obj, null, 1)
       const blob = new Blob([jsonString], { type: "application/json" });
-       // Cria um link de download
-       const link = document.createElement("a");
-       link.href = URL.createObjectURL(blob);
-       link.download = "dados.json";
-       // Aciona o download
-       link.click();
+      // Cria um link de download
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "dados.json";
+      // Aciona o download
+      link.click();
 
-       // Libera a memória usada pelo Blob
-       URL.revokeObjectURL(link.href);
+      // Libera a memória usada pelo Blob
+      URL.revokeObjectURL(link.href);
     }
   };
 
   let gui = new GUI();
+  const params = {
+    textField: "arvore.json"
+  }
+
+  gui.add(params, "textField").name('test').onFinishChange(function (value) {
+    console.log('value: ', value);
+  });
   let folder = gui.addFolder("Builder Options");
   folder.open();
   folder.add(controls, 'save').name("SALVAR");
