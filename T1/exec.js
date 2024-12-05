@@ -9,20 +9,26 @@ import {
   onWindowResize
 } from "../libs/util/util.js";
 import { rows } from './utils/map.js'
+import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
 
-let scene, renderer, camera, material, light, orbit, controls;; // Initial variables
+let scene, renderer, firstPersonCamera, inspectionCamera, currentCamera, material, light, orbit, controls;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
 
-camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(3, 3, -7);
-camera.lookAt(new THREE.Vector3(0, 2, 0));
-scene.add(camera);
+firstPersonCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+firstPersonCamera.position.set(3, 3, -7);
+firstPersonCamera.lookAt(new THREE.Vector3(0, 2, 0));
+scene.add(firstPersonCamera);
 
-// camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position (DEFAULT CAMERA)
+inspectionCamera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position (DEFAULT CAMERA)
+scene.add(inspectionCamera);
+
+currentCamera = firstPersonCamera;
+
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
-controls = new PointerLockControls(camera, renderer.domElement);
+controls = new PointerLockControls(firstPersonCamera, renderer.domElement);
+orbit = new OrbitControls(inspectionCamera, renderer.domElement);
 const blocker = document.getElementById('blocker');
 const instructions = document.getElementById('instructions');
 
@@ -43,6 +49,13 @@ controls.addEventListener('unlock', function () {
 });
 scene.add(controls.getObject());
 
+function changeCamera(){
+  if(currentCamera==firstPersonCamera)
+    currentCamera = inspectionCamera;
+  else
+    currentCamera = firstPersonCamera;
+}
+
 const speed = 10;
 let moveForward = false;
 let moveBackward = false;
@@ -53,6 +66,16 @@ let moveDown = false;
 
 window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
 window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
+window.addEventListener('keydown', (event) => {
+  switch(event.key){
+    case 'c':
+      changeCamera();
+      break;
+    case 'C':
+      changeCamera();
+      break;
+  }
+})
 
 function movementControls(key, value) {
   switch (key) {
@@ -74,13 +97,9 @@ function movementControls(key, value) {
     case 16:
       moveDown = value;
       break;
-    case 67: // C
-      if(!value)
-        break;
-      
       // COMO SALVAR => localStorage.setItem('key', val) | Ex: localStorage.setItem('firstPersonCam', position)
       // COMO RECUPERAR => localStorage.getItem('key') | Ex: localStorage.getItem('firstPersonCam')
-      break;
+      // break;
   }
 }
 
@@ -108,7 +127,7 @@ function moveAnimate(delta) {
 }
 
 // Listen window size changes
-window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
+window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 // Create terrain function
 const terrainColor = ['rgb(0,200,0)', 'rgb(255,150,0)', 'rgb(255,255,255)'];
@@ -228,5 +247,5 @@ function render() {
     moveAnimate(clock.getDelta());
   }
   requestAnimationFrame(render);
-  renderer.render(scene, camera) // Render scene
+  renderer.render(scene, currentCamera); // Render scene
 }
