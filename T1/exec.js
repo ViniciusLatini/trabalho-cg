@@ -170,27 +170,27 @@ const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 const trees = [
   {
     path: "./trees/a1.json",
-    ref: { x: 12.5, y: 1, z: -1.5 }
+    ref: { x: 12.5, y: 2, z: -1.5 }
   },
   {
     path: "./trees/a2.json",
-    ref: { x: 9.5, y: 1, z: -11.5 }
+    ref: { x: 9.5, y: 2, z: -11.5 }
   },
   {
     path: "./trees/a3.json",
-    ref: { x: 9.5, y: 1, z: 10.5 }
+    ref: { x: 9.5, y: 2, z: 10.5 }
   },
   {
     path: "./trees/a3.json",
-    ref: { x: -4.5, y: 1, z: -1.5 }
+    ref: { x: -4.5, y: 2, z: -1.5 }
   },
   {
     path: "./trees/a1.json",
-    ref: { x: -5.5, y: 1, z: -11.5 }
+    ref: { x: -5.5, y: 2, z: -11.5 }
   },
   {
     path: "./trees/a2.json",
-    ref: { x: -6.5, y: 1, z: 10.5 }
+    ref: { x: -6.5, y: 2, z: 10.5 }
   },
 
 ]
