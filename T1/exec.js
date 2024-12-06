@@ -32,28 +32,34 @@ orbit = new OrbitControls(inspectionCamera, renderer.domElement);
 const blocker = document.getElementById('blocker');
 const instructions = document.getElementById('instructions');
 
-instructions.addEventListener('click', function () {
+// instructions.addEventListener('click', function () {
 
-  controls.lock();
+//   controls.lock();
 
-}, false);
+// }, false);
 
-controls.addEventListener('lock', function () {
-  instructions.style.display = 'none';
-  blocker.style.display = 'none';
-});
+// controls.addEventListener('lock', function () {
+//   instructions.style.display = 'none';
+//   blocker.style.display = 'none';
+// });
 
-controls.addEventListener('unlock', function () {
-  blocker.style.display = 'block';
-  instructions.style.display = '';
-});
-scene.add(controls.getObject());
+// controls.addEventListener('unlock', function () {
+//   blocker.style.display = 'block';
+//   instructions.style.display = '';
+// });
+
+// scene.add(controls.getObject());
 
 function changeCamera(){
-  if(currentCamera==firstPersonCamera)
+  if(currentCamera==firstPersonCamera){
     currentCamera = inspectionCamera;
-  else
+    controls.unlock();
+    orbit.connect();
+  }else{
     currentCamera = firstPersonCamera;
+    orbit.disconnect();
+    controls.lock();
+  }
 }
 
 const speed = 10;
@@ -90,12 +96,6 @@ function movementControls(key, value) {
       break;
     case 68: // D
       moveRight = value;
-      break;
-    case 32:
-      moveUp = value;
-      break;
-    case 16:
-      moveDown = value;
       break;
   }
 }
@@ -170,27 +170,27 @@ const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 const trees = [
   {
     path: "./trees/a1.json",
-    ref: { x: 12.5, y: 2, z: -1.5 }
+    ref: { x: 12.5, y: 1, z: -1.5 }
   },
   {
     path: "./trees/a2.json",
-    ref: { x: 9.5, y: 2, z: -11.5 }
+    ref: { x: 9.5, y: 1, z: -11.5 }
   },
   {
     path: "./trees/a3.json",
-    ref: { x: 9.5, y: 2, z: 10.5 }
+    ref: { x: 9.5, y: 1, z: 10.5 }
   },
   {
     path: "./trees/a3.json",
-    ref: { x: -4.5, y: 2, z: -1.5 }
+    ref: { x: -4.5, y: 1, z: -1.5 }
   },
   {
     path: "./trees/a1.json",
-    ref: { x: -5.5, y: 2, z: -11.5 }
+    ref: { x: -5.5, y: 1, z: -11.5 }
   },
   {
     path: "./trees/a2.json",
-    ref: { x: -6.5, y: 2, z: 10.5 }
+    ref: { x: -6.5, y: 1, z: 10.5 }
   },
 
 ]
@@ -240,9 +240,8 @@ loadTrees()
 const clock = new THREE.Clock();
 render();
 function render() {
-  if (controls.isLocked) {
-    moveAnimate(clock.getDelta());
-  }
+  moveAnimate(clock.getDelta());
+
   requestAnimationFrame(render);
   renderer.render(scene, currentCamera); // Render scene
 }
