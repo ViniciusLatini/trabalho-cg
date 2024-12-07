@@ -5,7 +5,6 @@ import {
   initCamera,
   initDefaultBasicLight,
   setDefaultMaterial,
-  InfoBox,
   onWindowResize
 } from "../libs/util/util.js";
 import { rows } from './utils/map.js'
@@ -29,35 +28,16 @@ material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 controls = new PointerLockControls(firstPersonCamera, renderer.domElement);
 orbit = new OrbitControls(inspectionCamera, renderer.domElement);
-const blocker = document.getElementById('blocker');
-const instructions = document.getElementById('instructions');
 
-// instructions.addEventListener('click', function () {
+controls.lock();
+scene.add(controls.getObject());
 
-//   controls.lock();
-
-// }, false);
-
-// controls.addEventListener('lock', function () {
-//   instructions.style.display = 'none';
-//   blocker.style.display = 'none';
-// });
-
-// controls.addEventListener('unlock', function () {
-//   blocker.style.display = 'block';
-//   instructions.style.display = '';
-// });
-
-// scene.add(controls.getObject());
-
-function changeCamera(){
-  if(currentCamera==firstPersonCamera){
+function changeCamera() {
+  if (currentCamera == firstPersonCamera) {
     currentCamera = inspectionCamera;
     controls.unlock();
-    orbit.connect();
-  }else{
+  } else {
     currentCamera = firstPersonCamera;
-    orbit.disconnect();
     controls.lock();
   }
 }
@@ -73,7 +53,7 @@ let moveDown = false;
 window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
 window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
 window.addEventListener('keydown', (event) => {
-  switch(event.key){
+  switch (event.key) {
     case 'c':
       changeCamera();
       break;
@@ -205,7 +185,7 @@ function loadTrees() {
         data.map(({ position, mesh }) => {
           const material = setDefaultMaterial(mesh.materials[0].color)
           const voxel = new THREE.Mesh(cubeGeometry, material)
-          voxel.position.set(position.x + ref.x, position.y + ref.y, position.z + ref.z)
+          voxel.position.set(position.x + ref.x, position.y + 1 + ref.y, position.z + ref.z)
           scene.add(voxel)
         })
       })
@@ -230,17 +210,12 @@ scene.add(grid);
 createTerrain();
 loadTrees()
 
-// Use this to show information onscreen
-// controls.add("Use mouse to interact:");
-// controls.add("* Left button to rotate");
-// controls.add("* Right button to translate (pan)");
-// controls.add("* Scroll to zoom in/out.");
-// controls.add("* Scroll to zoom in/out.");
-
 const clock = new THREE.Clock();
 render();
 function render() {
-  moveAnimate(clock.getDelta());
+  if (controls.isLocked) {
+    moveAnimate(clock.getDelta());
+  }
 
   requestAnimationFrame(render);
   renderer.render(scene, currentCamera); // Render scene
