@@ -11,7 +11,7 @@ import {
 import { voxelsTypes } from './utils/voxelsTypes.js'
 import GUI from '../libs/util/dat.gui.module.js';
 
-let scene, renderer, camera, material, light, orbit;; // Initial variables
+let scene, renderer, camera, material, light, orbit; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
 camera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position
@@ -42,17 +42,6 @@ plane.rotateX(-Math.PI / 2);
 scene.add(plane);
 const grid = new THREE.GridHelper(10, 10);
 scene.add(grid);
-
-// const highlightMesh = new THREE.Mesh(
-//   new THREE.PlaneGeometry(1, 1),
-//   new THREE.MeshBasicMaterial({
-//     side: THREE.DoubleSide,
-//     transparent: true
-//   })
-// );
-// highlightMesh.rotateX(-Math.PI / 2);
-// highlightMesh.position.set(0.5, 0, 0.5);
-// scene.add(highlightMesh);
 
 // Criação do cubo preview (Wireframe)
 const boxWireframe = new THREE.BoxGeometry(1, 1, 1);
@@ -233,11 +222,6 @@ function buildInterface() {
 let controls = new InfoBox();
 controls.add("Builder");
 controls.addParagraph();
-// controls.add("Use mouse to interact:");
-// controls.add("* Left button to rotate");
-// controls.add("* Right button to translate (pan)");
-// controls.add("* Scroll to zoom in/out.");
-// controls.add("* Scroll to zoom in/out.");
 controls.show("Voxels");
 controls.add("* Movimentação no plano XZ: Setas direcionais do teclado.");
 controls.add("* Movimentação em Y: PgUp e PgDown.");
