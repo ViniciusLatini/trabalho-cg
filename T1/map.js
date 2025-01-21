@@ -10,6 +10,7 @@ import {
   createGroundPlaneXZ
 } from "../libs/util/util.js";
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
+import Stats from '../build/jsm/libs/stats.module.js';
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -18,6 +19,8 @@ camera = initCamera(new THREE.Vector3(0, 50, 50)); // Init camera in this positi
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
+const stats = new Stats()
+document.getElementById("webgl-output").appendChild(stats.domElement);
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -38,7 +41,7 @@ function makeColumn(height, position) {
     grass: '#226923',
     soil: '#4A3424'
   }
-  
+
   for (let i = 0; i < height; i++) {
     let color;
     if (i < height - 4) color = terrain.rock;
@@ -77,4 +80,5 @@ render();
 function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera) // Render scene
+  stats.update();
 }
