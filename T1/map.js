@@ -11,6 +11,7 @@ import {
 } from "../libs/util/util.js";
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
 import Stats from '../build/jsm/libs/stats.module.js';
+import GUI from '../libs/util/dat.gui.module.js';
 
 let scene, renderer, camera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -19,12 +20,15 @@ camera = initCamera(new THREE.Vector3(0, 50, 50)); // Init camera in this positi
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
+
+let fogFar = 100
+scene.fog = new THREE.Fog(0xaaaaaa, 1, 100);
+
 const stats = new Stats()
 document.getElementById("webgl-output").appendChild(stats.domElement);
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
-
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 
@@ -66,15 +70,29 @@ for (let i = -20; i <= 20; i++) {
   }
 }
 
+const controls = new function () {
+  this.fogFar = fogFar;
+
+  this.updatefogFar = () => {
+    scene.fog.far = this.fogFar;
+  }
+}
+
+const gui = new GUI();
+
+gui.add(controls, 'fogFar', 20, 200)
+  .name("Fog Far")
+  .onChange(function (e) { controls.updatefogFar(); });
+
 // Use this to show information onscreen
-let controls = new InfoBox();
-controls.add("Basic Scene");
-controls.addParagraph();
-controls.add("Use mouse to interact:");
-controls.add("* Left button to rotate");
-controls.add("* Right button to translate (pan)");
-controls.add("* Scroll to zoom in/out.");
-controls.show();
+// let controls = new InfoBox();
+// controls.add("Basic Scene");
+// controls.addParagraph();
+// controls.add("Use mouse to interact:");
+// controls.add("* Left button to rotate");
+// controls.add("* Right button to translate (pan)");
+// controls.add("* Scroll to zoom in/out.");
+// controls.show();
 
 render();
 function render() {
