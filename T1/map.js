@@ -31,44 +31,72 @@ document.getElementById("webgl-output").appendChild(stats.domElement);
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const materials = {
+  rock: new THREE.MeshPhongMaterial({ color: '#575757' }),
+  soil: new THREE.MeshPhongMaterial({ color: '#4A3424' }),
+  grass: new THREE.MeshPhongMaterial({ color: '#226923' }),
+};
+const simplex = new SimplexNoise();
 
-function makeCube(height, position, color) {
-  let material = new THREE.MeshPhongMaterial(color);
-  let cube = new THREE.Mesh(boxGeometry, material);
-  cube.position.set(position.x, height + 0.5, position.z);
-  scene.add(cube);
+// Criação de instâncias para cada material
+const rockMesh = new THREE.InstancedMesh(boxGeometry, materials.rock, 100000);
+const soilMesh = new THREE.InstancedMesh(boxGeometry, materials.soil, 100000);
+const grassMesh = new THREE.InstancedMesh(boxGeometry, materials.grass, 100000);
+
+// Contadores de instâncias
+let rockIndex = 0;
+let soilIndex = 0;
+let grassIndex = 0;
+
+//Indicando para GPU que essas informações serão atualizadas com frequência
+rockMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+soilMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+grassMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+// Função para definir a instância
+function setInstance(mesh, index, position) {
+  const matrix = new THREE.Matrix4();
+  matrix.setPosition(position.x, position.y, position.z);
+  mesh.setMatrixAt(index, matrix);
 }
 
 function makeColumn(height, position) {
-  const terrain = {
-    rock: '#575757',
-    grass: '#226923',
-    soil: '#4A3424'
-  }
-
   for (let i = 0; i < height; i++) {
-    let color;
-    if (i < height - 4) color = terrain.rock;
-    else if (i < height - 2) color = terrain.soil;
-    else color = terrain.grass;
-    makeCube(i, position, { color });
+    let mesh, idx;
+
+    if (i < height - 4) {
+      mesh = rockMesh;
+      idx = rockIndex++;
+    }
+    else if (i < height - 2) {
+      mesh = soilMesh;
+      idx = soilIndex++;
+    }
+    else {
+      mesh = grassMesh;
+      idx = grassIndex++;
+    }
+    setInstance(mesh, idx, { x: position.x, y: i + 0.5, z: position.z });
   }
 }
 
-function roundHeight(value, step) {
-  return Math.round(value / step) * step;
-}
-
-const simplex = new SimplexNoise();
-
-for (let i = -20; i <= 20; i++) {
-  for (let j = -20; j <= 20; j++) {
-    let noise = (simplex.noise(i / 30, j / 30) + 1) / 2;
-    noise = Math.pow(noise, 1.5)
-    let roundedHeight = roundHeight(noise * 20, 1); // Arredondar a altura para o múltiplo mais próximo
-    makeColumn(roundedHeight, { x: i, z: j });
+for (let i = -50; i <= 50; i++) {
+  for (let j = -50; j <= 50; j++) {
+    const noise = Math.pow((simplex.noise(i / 30, j / 30) + 1) / 2, 1.5);
+    const height = Math.round(noise * 20);
+    makeColumn(height, { x: i, z: j });
   }
 }
+
+// Atualizar os contadores de instância
+rockMesh.instanceMatrix.needsUpdate = true;
+soilMesh.instanceMatrix.needsUpdate = true;
+grassMesh.instanceMatrix.needsUpdate = true;
+
+// Adicionar as instâncias à cena
+scene.add(rockMesh);
+scene.add(soilMesh);
+scene.add(grassMesh);
 
 const controls = new function () {
   this.fogFar = fogFar;
