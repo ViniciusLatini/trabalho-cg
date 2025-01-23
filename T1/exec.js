@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.js';
+import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js'
 import {
   initRenderer,
   initCamera,
@@ -22,7 +23,7 @@ scene.add(firstPersonCamera);
 inspectionCamera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position (DEFAULT CAMERA)
 scene.add(inspectionCamera);
 
-currentCamera = firstPersonCamera;
+currentCamera = inspectionCamera;
 
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
@@ -31,6 +32,30 @@ orbit = new OrbitControls(inspectionCamera, renderer.domElement);
 
 controls.lock();
 scene.add(controls.getObject());
+
+loadGLTFFile('./utils/steve.glb');
+
+function loadGLTFFile(modelName)
+{
+  var loader = new GLTFLoader();
+  loader.load(modelName, function(gltf){
+    var steve = gltf.scene;
+    steve.traverse(function(child){
+      if (child.isMesh) child.castShadow = true;
+      if (child.material) child.material.side = THREE.DoubleSide;
+    });
+    steve.position.set(0.0, 4.0, 0.0);
+    scene.add(steve);
+    }, onProgress, onError);
+}
+
+function onError(){ };
+
+function onProgress(xhr, model){
+    if (xhr.lengthComputable){
+      var percentComplete = xhr.loaded / xhr.total * 100;
+    }
+}
 
 function changeCamera() {
   if (currentCamera == firstPersonCamera) {
