@@ -15,18 +15,14 @@ export class CharacterController{
     fade = 0.2
     walkVelocity = 7
 
-    constructor(model, mixer, animationsMap, OrbitControl, camera, currentAction) {
+    constructor(model, mixer, animationsMap, OrbitControl, camera) {
         this.model = model
         this.mixer = mixer
         this.animationsMap = animationsMap
-        this.currentAction = currentAction;
-        this.animationsMap.forEach((value, key) => {
-            if (key == this.currentAction){
-                value.play()
-            }
-        })
+        this.currentAction = '';
         this.OrbitControl = OrbitControl;
         this.camera = camera;
+        this.updateCamera(0,0)
     }
 
     update (delta, keysPressed) {
@@ -46,8 +42,8 @@ export class CharacterController{
         if(this.currentAction == 'walking'){
             // calculate towards camera direction
             var angleYCameraDirection = Math.atan2(
-                (this.camera.position.x - this.model.position.x), 
-                (this.camera.position.z - this.model.position.z))
+                (this.model.position.x - this.camera.position.x), 
+                (this.model.position.z - this.camera.position.z))
 
             // diagonal movement angle offset
             var directionOffset = this.directionOffset(keysPressed)
