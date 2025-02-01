@@ -1,5 +1,5 @@
+// Imports
 import * as THREE from 'three';
-import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.js';
 import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js'
 import {
   initRenderer,
@@ -8,46 +8,48 @@ import {
   setDefaultMaterial,
   onWindowResize
 } from "../libs/util/util.js";
-import { rows } from './utils/map.js'
+import { rows } from './utils/map.js';
+import { CharacterController } from './characterController.js';
 import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
 
 let scene, renderer, firstPersonCamera, inspectionCamera, currentCamera, material, light, orbit, controls;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
 
-firstPersonCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-firstPersonCamera.position.set(3, 3, -7);
-firstPersonCamera.lookAt(new THREE.Vector3(0, 2, 0));
-scene.add(firstPersonCamera);
+// Create third person camera
+let thirdPersonCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+thirdPersonCam.position.set(0, 5, 5);
+scene.add(thirdPersonCam);
 
-inspectionCamera = initCamera(new THREE.Vector3(0, 15, 30)); // Init camera in this position (DEFAULT CAMERA)
-scene.add(inspectionCamera);
-
-currentCamera = inspectionCamera;
+// Create orbit controls
+const orbitControls = new OrbitControls(thirdPersonCam, renderer.domElement);
+orbitControls.enableDamping = true;
+orbitControls.minDistance = 10;
+orbitControls.maxDistance = 25;
+orbitControls.enablePan = false;
+orbitControls.update();
 
 material = setDefaultMaterial(); // create a basic material
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
-controls = new PointerLockControls(firstPersonCamera, renderer.domElement);
-orbit = new OrbitControls(inspectionCamera, renderer.domElement);
 
-controls.lock();
-scene.add(controls.getObject());
+var characterController
+new GLTFLoader().load('./utils/steve.glb', function(gltf){
+  const model = gltf.scene;
+  model.traverse(function (child) {
+    if (child.isMesh) child.castShadow = true;
+  });
+  model.position.set(0, 4, 0);
+  scene.add(model);
 
-loadGLTFFile('./utils/steve.glb');
+  const animations = gltf.animations;
+  const mixer = new THREE.AnimationMixer(model);
+  const animationsMap = new Map()
+  animations.filter(a => a.name != 'TPose').forEach((a) =>{
+    animationsMap.set(a.name, mixer.clipAction(a))
+  })
 
-function loadGLTFFile(modelName)
-{
-  var loader = new GLTFLoader();
-  loader.load(modelName, function(gltf){
-    var steve = gltf.scene;
-    steve.traverse(function(child){
-      if (child.isMesh) child.castShadow = true;
-      if (child.material) child.material.side = THREE.DoubleSide;
-    });
-    steve.position.set(0.0, 4.0, 0.0);
-    scene.add(steve);
-    }, onProgress, onError);
-}
+  characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam, 'Idle')
+});
 
 function onError(){ };
 
@@ -75,35 +77,14 @@ let moveRight = false;
 let moveUp = false;
 let moveDown = false;
 
-window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
-window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
+// Add key listeners for character control
+const keysPressed = { }
 window.addEventListener('keydown', (event) => {
-  switch (event.key) {
-    case 'c':
-      changeCamera();
-      break;
-    case 'C':
-      changeCamera();
-      break;
-  }
-})
-
-function movementControls(key, value) {
-  switch (key) {
-    case 87: // W
-      moveForward = value;
-      break;
-    case 83: // S
-      moveBackward = value;
-      break;
-    case 65: // A
-      moveLeft = value;
-      break;
-    case 68: // D
-      moveRight = value;
-      break;
-  }
-}
+  (keysPressed)[event.key.toLowerCase()] = true
+}, false);
+window.addEventListener('keyup', (event) => {
+  (keysPressed)[event.key.toLowerCase()] = false
+}, false);
 
 function moveAnimate(delta) {
   if (moveForward) {
@@ -235,13 +216,15 @@ scene.add(grid);
 createTerrain();
 loadTrees()
 
+// Rendering the scene
 const clock = new THREE.Clock();
 render();
 function render() {
-  if (controls.isLocked) {
-    moveAnimate(clock.getDelta());
+  let mixerUpdateDelta = clock.getDelta();
+  if (characterController){
+    characterController.update(mixerUpdateDelta, keysPressed);
   }
-
+  orbitControls.update();
   requestAnimationFrame(render);
-  renderer.render(scene, currentCamera); // Render scene
+  renderer.render(scene, thirdPersonCam);
 }
