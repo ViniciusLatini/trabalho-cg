@@ -1,6 +1,7 @@
 // Imports
 import * as THREE from 'three';
-import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js'
+import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
+import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js';
 import {
   initRenderer,
   initCamera,
@@ -10,7 +11,6 @@ import {
 } from "../libs/util/util.js";
 import { rows } from './utils/map.js';
 import { CharacterController } from './characterController.js';
-import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
 
 let scene, renderer, firstPersonCamera, inspectionCamera, currentCamera, material, light, orbit, controls;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
@@ -42,6 +42,7 @@ new GLTFLoader().load('./utils/steve.glb', function(gltf){
   scene.add(model);
 
   const animations = gltf.animations;
+  console.log(animations);
   const mixer = new THREE.AnimationMixer(model);
   const animationsMap = new Map()
   animations.filter(a => a.name != 'TPose').forEach((a) =>{
@@ -110,7 +111,7 @@ function moveAnimate(delta) {
 }
 
 // Listen window size changes
-window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
+window.addEventListener('resize', function () { onWindowResize(thirdPersonCam, renderer) }, false);
 
 // Create terrain function
 const terrainColor = ['rgb(0,200,0)', 'rgb(255,150,0)', 'rgb(255,255,255)'];
