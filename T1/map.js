@@ -46,13 +46,16 @@ new GLTFLoader().load('./utils/steve.glb', function(gltf){
     animationsMap.set(a.name, mixer.clipAction(a))
   })
 
-  characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam, 'Idle')
+  characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam)
 });
 
 // Add key listeners for character control
-const keysPressed = { }
+const keysPressed = { } // Reserved for character movements (WASD)
 window.addEventListener('keydown', (event) => {
   (keysPressed)[event.key.toLowerCase()] = true
+  if(event.key == " "){
+    characterController.jump()
+  }
 }, false);
 window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false
@@ -70,7 +73,7 @@ const stats = new Stats()
 document.getElementById("webgl-output").appendChild(stats.domElement);
 
 // Listen window size changes
-window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
+window.addEventListener('resize', function () { onWindowResize(thirdPersonCam, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 

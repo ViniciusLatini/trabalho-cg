@@ -4,6 +4,7 @@ export const A = 'a'
 export const S = 's'
 export const D = 'd'
 export const DIRECTIONS = [W, A, S, D]
+export const JUMP = 'space'
 export class CharacterController{
     animationsMap = new Map()
     // Moving data
@@ -23,6 +24,14 @@ export class CharacterController{
         this.OrbitControl = OrbitControl;
         this.camera = camera;
         this.updateCamera(0,0)
+    }
+
+    jump () {
+        let alpha = 0.01
+        let characterY = this.model.position.y
+        let jumpHeight = 50
+        this.model.position.y = THREE.MathUtils.lerp(characterY, characterY + jumpHeight, alpha)
+        this.updateCamera(0, 0);
     }
 
     update (delta, keysPressed) {
@@ -71,7 +80,7 @@ export class CharacterController{
         this.camera.position.z += moveZ
 
         this.cameraTarget.x = this.model.position.x
-        this.cameraTarget.y = this.model.position.y + 1
+        this.cameraTarget.y = this.model.position.y + 2
         this.cameraTarget.z = this.model.position.z
         this.OrbitControl.target = this.cameraTarget
     }
