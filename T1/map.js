@@ -8,14 +8,55 @@ import {
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
 import Stats from '../build/jsm/libs/stats.module.js';
 import GUI from '../libs/util/dat.gui.module.js';
+import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js';
+import { CharacterController } from './characterController.js';
 
-let scene, renderer, camera, material, light, orbit;; // Initial variables
+let scene, renderer, perspectiveCamera, material, light, orbit;; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
-camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 9, 0);
+perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+perspectiveCamera.position.set(0, 9, 0);
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
-orbit = new OrbitControls(camera, renderer.domElement); // Enable mouse rotation, pan, zoom etc.
+
+// Create third person camera
+let thirdPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+thirdPersonCam.position.set(0, 5, 5);
+scene.add(thirdPersonCam);
+
+// Create orbit controls
+const orbitControls = new OrbitControls(thirdPersonCam, renderer.domElement);
+orbitControls.enableDamping = true;
+orbitControls.update();
+
+// Create Steve and its controls
+var characterController
+new GLTFLoader().load('./utils/steve.glb', function(gltf){
+  const model = gltf.scene;
+  model.traverse(function (child) {
+    if (child.isMesh) child.castShadow = true;
+  });
+  model.position.set(0, 4, 0);
+  scene.add(model);
+
+  const animations = gltf.animations;
+  console.log(animations);
+  const mixer = new THREE.AnimationMixer(model);
+  const animationsMap = new Map()
+  animations.filter(a => a.name != 'walking').forEach((a) =>{
+    animationsMap.set(a.name, mixer.clipAction(a))
+  })
+
+  characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam, 'Idle')
+});
+
+// Add key listeners for character control
+const keysPressed = { }
+window.addEventListener('keydown', (event) => {
+  (keysPressed)[event.key.toLowerCase()] = true
+}, false);
+window.addEventListener('keyup', (event) => {
+  (keysPressed)[event.key.toLowerCase()] = false
+}, false);
 
 const mapSize = 100
 
@@ -152,10 +193,16 @@ gui.add(controls, 'fogFar', 20, 200)
 
 generateProceduralMap()
 renderTrees()
+const clock = new THREE.Clock();
 render();
 function render() {
+  let mixerUpdateDelta = clock.getDelta();
+  if (characterController){
+    characterController.update(mixerUpdateDelta, keysPressed);
+  }
+  orbitControls.update();
   requestAnimationFrame(render);
-  renderer.render(scene, camera) // Render scene
+  renderer.render(scene, thirdPersonCam) // Render scene
   grassMesh.frustumCulled = true;
   stats.update();
 }

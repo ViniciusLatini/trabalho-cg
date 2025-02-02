@@ -52,14 +52,6 @@ new GLTFLoader().load('./utils/steve.glb', function(gltf){
   characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam, 'Idle')
 });
 
-function onError(){ };
-
-function onProgress(xhr, model){
-    if (xhr.lengthComputable){
-      var percentComplete = xhr.loaded / xhr.total * 100;
-    }
-}
-
 function changeCamera() {
   if (currentCamera == firstPersonCamera) {
     currentCamera = inspectionCamera;

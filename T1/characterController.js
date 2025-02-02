@@ -13,7 +13,7 @@ export class CharacterController{
     cameraTarget = new THREE.Vector3()
     // Moving constants
     fade = 0.2
-    walkVelocity = 7
+    walkVelocity = 10
 
     constructor(model, mixer, animationsMap, OrbitControl, camera) {
         this.model = model
