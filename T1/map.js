@@ -50,9 +50,10 @@ new GLTFLoader().load('./utils/steve.glb', function(gltf){
 });
 
 // Add key listeners for character control
-const keysPressed = { } // Reserved for character movements (WASD)
+const keysPressed = { } // Reserved for character movements
 window.addEventListener('keydown', (event) => {
   (keysPressed)[event.key.toLowerCase()] = true
+  console.log(event.key.toString())
   if(event.key == " "){
     characterController.jump()
   }
