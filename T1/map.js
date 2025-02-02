@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from '../build/jsm/controls/OrbitControls.js';
+import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.js'; // Import PointerLockControls
+import { OrbitControls } from '../build/jsm/controls/OrbitControls.js'; // Import OrbitControls
 import {
   initRenderer,
   initDefaultBasicLight,
@@ -8,29 +9,42 @@ import {
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
 import Stats from '../build/jsm/libs/stats.module.js';
 import GUI from '../libs/util/dat.gui.module.js';
-import {GLTFLoader} from '../build/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from '../build/jsm/loaders/GLTFLoader.js';
 import { CharacterController } from './characterController.js';
 
-let scene, renderer, perspectiveCamera, material, light, orbit;; // Initial variables
+let scene, renderer, inspectionCamera, currentCamera, material, light; // Initial variables
 scene = new THREE.Scene();    // Create main scene
 renderer = initRenderer();    // Init a basic renderer
-perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-perspectiveCamera.position.set(0, 9, 0);
+inspectionCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+inspectionCamera.position.set(10, 9, 10);
+scene.add(inspectionCamera);
 light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 
 // Create third person camera
 let thirdPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 thirdPersonCam.position.set(0, 5, 5);
 scene.add(thirdPersonCam);
+currentCamera = thirdPersonCam;
 
-// Create orbit controls
-const orbitControls = new OrbitControls(thirdPersonCam, renderer.domElement);
-orbitControls.enableDamping = true;
+// Create PointerLockControls
+const pointerLockControls = new PointerLockControls(thirdPersonCam, renderer.domElement);
+scene.add(pointerLockControls.getObject()); // Add the camera to the scene
+
+// Create OrbitControls for inspection camera
+const orbitControls = new OrbitControls(inspectionCamera, renderer.domElement);
+orbitControls.enableDamping = true; // Suaviza o movimento da câmera
 orbitControls.update();
 
+// Enable PointerLockControls on click
+document.addEventListener('click', () => {
+  if (currentCamera === thirdPersonCam) {
+    pointerLockControls.lock();
+  }
+});
+
 // Create Steve and its controls
-var characterController
-new GLTFLoader().load('./utils/steve.glb', function(gltf){
+var characterController;
+new GLTFLoader().load('./utils/steve.glb', function (gltf) {
   const model = gltf.scene;
   model.traverse(function (child) {
     if (child.isMesh) child.castShadow = true;
@@ -41,49 +55,63 @@ new GLTFLoader().load('./utils/steve.glb', function(gltf){
   const animations = gltf.animations;
   console.log(animations);
   const mixer = new THREE.AnimationMixer(model);
-  const animationsMap = new Map()
-  animations.filter(a => a.name != 'walking').forEach((a) =>{
-    animationsMap.set(a.name, mixer.clipAction(a))
-  })
+  const animationsMap = new Map();
+  animations.filter(a => a.name != 'walking').forEach((a) => {
+    animationsMap.set(a.name, mixer.clipAction(a));
+  });
 
-  characterController = new CharacterController(model, mixer, animationsMap, orbitControls, thirdPersonCam)
+  characterController = new CharacterController(model, mixer, animationsMap, thirdPersonCam, pointerLockControls);
 });
 
+function changeCamera() {
+  if (currentCamera == thirdPersonCam) {
+    currentCamera = inspectionCamera;
+    pointerLockControls.unlock(); // Desativa PointerLockControls
+    orbitControls.enabled = true; // Ativa OrbitControls para a câmera de inspeção
+  } else {
+    currentCamera = thirdPersonCam;
+    orbitControls.enabled = false; // Desativa OrbitControls
+    pointerLockControls.lock(); // Ativa PointerLockControls
+  }
+}
+
 // Add key listeners for character control
-const keysPressed = { } // Reserved for character movements
+const keysPressed = {}; // Reserved for character movements
 window.addEventListener('keydown', (event) => {
-  (keysPressed)[event.key.toLowerCase()] = true
-  console.log(event.key.toString())
-  if(event.key == " "){
-    characterController.jump()
+  (keysPressed)[event.key.toLowerCase()] = true;
+  if (event.key == " ") {
+    characterController.jump();
+  }
+  if (event.key == "c" || event.key == "C") {
+    changeCamera();
   }
 }, false);
 window.addEventListener('keyup', (event) => {
-  (keysPressed)[event.key.toLowerCase()] = false
+  (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
 
-const mapSize = 100
+const mapSize = 100;
 
-let fogFar = 100
+let fogFar = 100;
 scene.fog = new THREE.Fog(0xaaaaaa, 1, 96);
 scene.background = new THREE.Color(0xaaaaaa);
 
 const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
 
-const stats = new Stats()
+const stats = new Stats();
 document.getElementById("webgl-output").appendChild(stats.domElement);
 
 // Listen window size changes
-window.addEventListener('resize', function () { onWindowResize(thirdPersonCam, renderer) }, false);
+window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 
-const grassMaterial = new THREE.MeshLambertMaterial({ color: '#226923' })
+const grassMaterial = new THREE.MeshLambertMaterial({ color: '#226923' });
 // Criação de instâncias para cada material
 const grassMesh = new THREE.InstancedMesh(boxGeometry, grassMaterial, 40000);
 // Contadores de instâncias
 let grassIndex = 0;
-//Indicando para GPU que essas informações serão atualizadas com frequência
+// Indicando para GPU que essas informações serão atualizadas com frequência
 grassMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
 // Função para definir a instância
@@ -110,7 +138,7 @@ function generateProceduralMap() {
 }
 
 async function loadTree(ref, idx) {
-  const response = await fetch(`./trees/a${idx%3 + 1}.json`);
+  const response = await fetch(`./trees/a${idx % 3 + 1}.json`);
   const data = await response.json();
 
   const group = new THREE.Group();
@@ -185,28 +213,20 @@ gui.add(controls, 'fogFar', 20, 200)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
 
-// Use this to show information onscreen
-// let controls = new InfoBox();
-// controls.add("Basic Scene");
-// controls.addParagraph();
-// controls.add("Use mouse to interact:");
-// controls.add("* Left button to rotate");
-// controls.add("* Right button to translate (pan)");
-// controls.add("* Scroll to zoom in/out.");
-// controls.show();
-
-generateProceduralMap()
-renderTrees()
+generateProceduralMap();
+renderTrees();
 const clock = new THREE.Clock();
 render();
 function render() {
   let mixerUpdateDelta = clock.getDelta();
-  if (characterController){
+  if (characterController) {
     characterController.update(mixerUpdateDelta, keysPressed);
   }
-  orbitControls.update();
+  if (currentCamera === inspectionCamera) {
+    orbitControls.update(); // Atualiza OrbitControls apenas quando a câmera de inspeção estiver ativa
+  }
   requestAnimationFrame(render);
-  renderer.render(scene, thirdPersonCam) // Render scene
+  renderer.render(scene, currentCamera); // Render scene
   grassMesh.frustumCulled = true;
   stats.update();
 }
