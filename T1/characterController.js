@@ -12,17 +12,21 @@ export const DIRECTIONS = [W, A, S, D, UP, LEFT, RIGHT, DOWN];
 
 export class CharacterController {
     animationsMap = new Map();
-    // Moving data
+
     walkDirection = new THREE.Vector3();
     rotateAngle = new THREE.Vector3(0, 1, 0);
     rotateQuarternion = new THREE.Quaternion();
     cameraTarget = new THREE.Vector3();
-    // Moving constants
+
     fade = 0.2;
     walkVelocity = 10;
     rotationSpeed = 0.05; // Velocidade de rotação do personagem
     cameraVerticalAngle = 0; // Ângulo vertical da câmera
-    heightMatrix = null
+    heightMatrix = null;
+
+    isJumping = false;
+    jumpVelocity = 0;
+    gravity = -30; // Força da gravidade
 
     constructor(model, mixer, animationsMap, camera, controls, heightMatrix) {
         this.model = model;
@@ -36,11 +40,10 @@ export class CharacterController {
     }
 
     jump() {
-        let alpha = 0.01;
-        let characterY = this.model.position.y;
-        let jumpHeight = 50;
-        this.model.position.y = THREE.MathUtils.lerp(characterY, characterY + jumpHeight, alpha);
-        this.updateCamera();
+        if (!this.isJumping) {
+            this.isJumping = true;
+            this.jumpVelocity = 15; // Velocidade inicial do pulo
+        }
     }
 
     update(delta, keysPressed) {
@@ -76,6 +79,45 @@ export class CharacterController {
 
             // Update camera position to follow the character
             this.updateCamera();
+        }
+
+        // Apply gravity and handle jumping
+        this.applyGravity(delta);
+    }
+
+    applyGravity(delta) {
+        if (this.isJumping) {
+            // Atualiza a velocidade do pulo de acordo com a gravidade
+            this.jumpVelocity += this.gravity * delta;
+
+            // Atualiza a posição do personagem
+            this.model.position.y += this.jumpVelocity * delta;
+
+            // Verifica se o personagem atingiu o chão
+            const currentXMap = Math.round(this.model.position.x) + 100;
+            const currentZMap = Math.round(this.model.position.z) + 100;
+            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2;
+
+            if (this.model.position.y <= groundHeight) {
+                this.model.position.y = groundHeight; // Coloca o personagem no chão
+                this.isJumping = false;
+                this.jumpVelocity = 0;
+            }
+        } else {
+            const currentXMap = Math.round(this.model.position.x) + 100;
+            const currentZMap = Math.round(this.model.position.z) + 100;
+            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2;
+
+            if (this.model.position.y > groundHeight) {
+                // Aplica a gravidade ao personagem
+                this.jumpVelocity += this.gravity * delta;
+                this.model.position.y += this.jumpVelocity * delta;
+
+                if (this.model.position.y <= groundHeight) {
+                    this.model.position.y = groundHeight; // Coloca o personagem no chão
+                    this.jumpVelocity = 0;
+                }
+            }
         }
     }
 
@@ -119,11 +161,10 @@ export class CharacterController {
         const { x, y, z } = this.model.position.clone().add(forwardVector);
         const nextXMap = Math.round(x) + 100;
         const nextZMap = Math.round(z) + 100;
-        const currentXMap = Math.round(this.model.position.x) + 100;
-        const currentZMap = Math.round(this.model.position.z) + 100;
-        if (this.heightMatrix[nextXMap][nextZMap] < y - 1) {
-            forwardVector.y = this.heightMatrix[nextXMap][nextZMap] - this.heightMatrix[currentXMap][currentZMap];
-            // Update character position
+
+        // Verifica se o próximo movimento é válido
+        if (this.heightMatrix[nextXMap][nextZMap] <= y - 2) {
+            // Move o personagem
             this.model.position.add(forwardVector);
         }
 

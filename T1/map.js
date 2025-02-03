@@ -12,38 +12,35 @@ import GUI from '../libs/util/dat.gui.module.js';
 import { GLTFLoader } from '../build/jsm/loaders/GLTFLoader.js';
 import { CharacterController } from './characterController.js';
 
-let scene, renderer, inspectionCamera, currentCamera, material, light; // Initial variables
-scene = new THREE.Scene();    // Create main scene
-renderer = initRenderer();    // Init a basic renderer
+let scene, renderer, inspectionCamera, currentCamera;
+scene = new THREE.Scene();    
+renderer = initRenderer();    
 inspectionCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 inspectionCamera.position.set(10, 9, 10);
 scene.add(inspectionCamera);
-light = initDefaultBasicLight(scene); // Create a basic light to illuminate the scene
 
-// Create third person camera
+// Criação da camera em 3ª pessoa
 let thirdPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 thirdPersonCam.position.set(0, 5, 5);
 scene.add(thirdPersonCam);
 currentCamera = thirdPersonCam;
 
-// Create PointerLockControls
 const pointerLockControls = new PointerLockControls(thirdPersonCam, renderer.domElement);
 scene.add(pointerLockControls.getObject()); // Add the camera to the scene
 
-// Create OrbitControls for inspection camera
 const orbitControls = new OrbitControls(inspectionCamera, renderer.domElement);
 orbitControls.enableDamping = true; // Suaviza o movimento da câmera
 orbitControls.update();
 
-// Enable PointerLockControls on click
 document.addEventListener('click', () => {
   if (currentCamera === thirdPersonCam) {
     pointerLockControls.lock();
   }
 });
 
-// Create Steve and its controls
+// Criação do personagem
 var characterController;
+let characterModel; // Variável para armazenar o modelo do personagem
 function createSteve() {
   new GLTFLoader().load('./utils/steve.glb', function (gltf) {
     const model = gltf.scene;
@@ -51,8 +48,9 @@ function createSteve() {
       if (child.isMesh) child.castShadow = true;
     });
 
-    model.position.set(0, heightMatrix[100][100] +2, 0);
+    model.position.set(0, heightMatrix[100][100] + 2, 0);
     scene.add(model);
+    characterModel = model; // Armazena o modelo do personagem
 
     const animations = gltf.animations;
     const mixer = new THREE.AnimationMixer(model);
@@ -77,8 +75,7 @@ function changeCamera() {
   }
 }
 
-// Add key listeners for character control
-const keysPressed = {}; // Reserved for character movements
+const keysPressed = {}; 
 window.addEventListener('keydown', (event) => {
   (keysPressed)[event.key.toLowerCase()] = true;
   if (event.key == " ") {
@@ -134,7 +131,6 @@ const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill
 const stats = new Stats();
 document.getElementById("webgl-output").appendChild(stats.domElement);
 
-// Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -206,43 +202,59 @@ function renderTrees() {
   }
 }
 
+// Configuração da luz direcional principal
 const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
 mainLight.position.set(100, 150, 100);
 mainLight.castShadow = true;
-mainLight.shadow.mapSize.width = 5000;
-mainLight.shadow.mapSize.height = 5000;
+mainLight.shadow.mapSize.width = 2048; // Tamanho do mapa de sombras
+mainLight.shadow.mapSize.height = 2048;
 mainLight.shadow.camera.near = 0.5;
 mainLight.shadow.camera.far = mapSize * 3;
-mainLight.shadow.camera.left = -mapSize*1.5;
-mainLight.shadow.camera.right = mapSize*1.5;
-mainLight.shadow.camera.top = mapSize*1.5;
-mainLight.shadow.camera.bottom = -mapSize*1.5;
+mainLight.shadow.camera.left = -mapSize * 1.5;
+mainLight.shadow.camera.right = mapSize * 1.5;
+mainLight.shadow.camera.top = mapSize * 1.5;
+mainLight.shadow.camera.bottom = -mapSize * 1.5;
 scene.add(mainLight);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+// Configuração da segunda luz direcional (sem sombras)
+const secondaryLight = new THREE.DirectionalLight(0xffffff, 0.5);
+secondaryLight.position.set(-100, 150, -100);
+secondaryLight.castShadow = false;
+scene.add(secondaryLight);
+
+// Configuração da luz ambiente
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
 
+// Helper para visualização do volume de sombra
 const shadowHelper = new THREE.CameraHelper(mainLight.shadow.camera);
-shadowHelper.visible = true;
+shadowHelper.visible = false; // Inicialmente desativado
 scene.add(shadowHelper);
 
+// Habilitar/desabilitar o helper de sombra
 document.addEventListener('keydown', (event) => {
   if (event.key === 'H' || event.key === 'h') {
     shadowHelper.visible = !shadowHelper.visible;
   }
 });
-createSteve()
+
+createSteve();
 
 const controls = new function () {
   this.fogFar = fogFar;
 
   this.updatefogFar = () => {
     scene.fog.far = this.fogFar;
+    mainLight.shadow.camera.far = this.fogFar * 3;
+    mainLight.shadow.camera.left = -this.fogFar * 1.5;
+    mainLight.shadow.camera.right = this.fogFar * 1.5;
+    mainLight.shadow.camera.top = this.fogFar * 1.5;
+    mainLight.shadow.camera.bottom = -this.fogFar * 1.5;
+    mainLight.shadow.camera.updateProjectionMatrix();
   }
 }
 
 const gui = new GUI();
-
 gui.add(controls, 'fogFar', 20, 200)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
@@ -255,12 +267,17 @@ function render() {
   let mixerUpdateDelta = clock.getDelta();
   if (characterController) {
     characterController.update(mixerUpdateDelta, keysPressed);
+    // Atualiza o target das luzes para seguir o personagem
+    if (characterModel) {
+      mainLight.target.position.copy(characterModel.position);
+      secondaryLight.target.position.copy(characterModel.position);
+    }
   }
   if (currentCamera === inspectionCamera) {
-    orbitControls.update(); // Atualiza OrbitControls apenas quando a câmera de inspeção estiver ativa
+    orbitControls.update();
   }
   requestAnimationFrame(render);
-  renderer.render(scene, currentCamera); // Render scene
+  renderer.render(scene, currentCamera);
   grassMesh.frustumCulled = true;
   stats.update();
 }
