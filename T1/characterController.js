@@ -122,9 +122,6 @@ export class CharacterController {
         const currentXMap = Math.round(this.model.position.x) + 100;
         const currentZMap = Math.round(this.model.position.z) + 100;
         if (this.heightMatrix[nextXMap][nextZMap] < y - 1) {
-            console.log('entrou');
-            console.log('y: ', y);
-            console.log('heightMatrix: ', this.heightMatrix[nextXMap][nextZMap]);
             forwardVector.y = this.heightMatrix[nextXMap][nextZMap] - this.heightMatrix[currentXMap][currentZMap];
             // Update character position
             this.model.position.add(forwardVector);

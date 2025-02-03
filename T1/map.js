@@ -146,6 +146,8 @@ const grassMesh = new THREE.InstancedMesh(boxGeometry, grassMaterial, 40000);
 let grassIndex = 0;
 // Indicando para GPU que essas informações serão atualizadas com frequência
 grassMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+grassMesh.receiveShadow = true;
+grassMesh.castShadow = true;
 
 // Função para definir a instância
 function setInstance(mesh, index, position) {
@@ -188,7 +190,7 @@ async function loadTree(ref, idx) {
       position.y + ref.y,
       position.z + ref.z + 0.5
     );
-
+    voxel.castShadow = true;
     group.add(voxel);
   });
 
@@ -204,33 +206,31 @@ function renderTrees() {
   }
 }
 
-let mainLight = new THREE.DirectionalLight(0xffffff, 1);
-mainLight.position.set(10, 20, 10);
+const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+mainLight.position.set(100, 150, 100);
 mainLight.castShadow = true;
-mainLight.shadow.mapSize.width = 2048;
-mainLight.shadow.mapSize.height = 2048;
+mainLight.shadow.mapSize.width = 5000;
+mainLight.shadow.mapSize.height = 5000;
 mainLight.shadow.camera.near = 0.5;
-mainLight.shadow.camera.far = 150;
+mainLight.shadow.camera.far = mapSize * 3;
+mainLight.shadow.camera.left = -mapSize*1.5;
+mainLight.shadow.camera.right = mapSize*1.5;
+mainLight.shadow.camera.top = mapSize*1.5;
+mainLight.shadow.camera.bottom = -mapSize*1.5;
+scene.add(mainLight);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
 
 const shadowHelper = new THREE.CameraHelper(mainLight.shadow.camera);
+shadowHelper.visible = true;
 scene.add(shadowHelper);
-shadowHelper.visible = false;
 
-let secondaryLight = new THREE.DirectionalLight(0xffffff, 0.3);
-secondaryLight.position.set(-10, -20, -10);
-
-scene.add(mainLight);
-scene.add(secondaryLight);
-
-function updateShadows() {
-  mainLight.shadow.camera.left = -fogFar / 2;
-  mainLight.shadow.camera.right = fogFar / 2;
-  mainLight.shadow.camera.top = fogFar / 2;
-  mainLight.shadow.camera.bottom = -fogFar / 2;
-  mainLight.shadow.camera.updateProjectionMatrix();
-}
-
-updateShadows();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'H' || event.key === 'h') {
+    shadowHelper.visible = !shadowHelper.visible;
+  }
+});
 createSteve()
 
 const controls = new function () {
