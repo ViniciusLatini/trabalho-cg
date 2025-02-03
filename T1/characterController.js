@@ -22,14 +22,16 @@ export class CharacterController {
     walkVelocity = 10;
     rotationSpeed = 0.05; // Velocidade de rotação do personagem
     cameraVerticalAngle = 0; // Ângulo vertical da câmera
+    heightMatrix = null
 
-    constructor(model, mixer, animationsMap, camera, controls) {
+    constructor(model, mixer, animationsMap, camera, controls, heightMatrix) {
         this.model = model;
         this.mixer = mixer;
         this.animationsMap = animationsMap;
         this.currentAction = '';
         this.camera = camera;
         this.controls = controls; // PointerLockControls instance
+        this.heightMatrix = heightMatrix;
         this.updateCamera(); // Initialize camera position
     }
 
@@ -113,8 +115,20 @@ export class CharacterController {
         forwardVector.normalize();
         forwardVector.multiplyScalar(this.walkVelocity * delta * direction);
 
-        // Update character position
-        this.model.position.add(forwardVector);
+        // Calculate the next position in the map
+        const { x, y, z } = this.model.position.clone().add(forwardVector);
+        const nextXMap = Math.round(x) + 100;
+        const nextZMap = Math.round(z) + 100;
+        const currentXMap = Math.round(this.model.position.x) + 100;
+        const currentZMap = Math.round(this.model.position.z) + 100;
+        if (this.heightMatrix[nextXMap][nextZMap] < y - 1) {
+            console.log('entrou');
+            console.log('y: ', y);
+            console.log('heightMatrix: ', this.heightMatrix[nextXMap][nextZMap]);
+            forwardVector.y = this.heightMatrix[nextXMap][nextZMap] - this.heightMatrix[currentXMap][currentZMap];
+            // Update character position
+            this.model.position.add(forwardVector);
+        }
 
         // Update camera position to follow the character
         this.updateCamera();

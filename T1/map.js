@@ -44,24 +44,26 @@ document.addEventListener('click', () => {
 
 // Create Steve and its controls
 var characterController;
-new GLTFLoader().load('./utils/steve.glb', function (gltf) {
-  const model = gltf.scene;
-  model.traverse(function (child) {
-    if (child.isMesh) child.castShadow = true;
-  });
-  model.position.set(0, 4, 0);
-  scene.add(model);
+function createSteve() {
+  new GLTFLoader().load('./utils/steve.glb', function (gltf) {
+    const model = gltf.scene;
+    model.traverse(function (child) {
+      if (child.isMesh) child.castShadow = true;
+    });
 
-  const animations = gltf.animations;
-  console.log(animations);
-  const mixer = new THREE.AnimationMixer(model);
-  const animationsMap = new Map();
-  animations.filter(a => a.name != 'walking').forEach((a) => {
-    animationsMap.set(a.name, mixer.clipAction(a));
-  });
+    model.position.set(0, heightMatrix[100][100] +2, 0);
+    scene.add(model);
 
-  characterController = new CharacterController(model, mixer, animationsMap, thirdPersonCam, pointerLockControls);
-});
+    const animations = gltf.animations;
+    const mixer = new THREE.AnimationMixer(model);
+    const animationsMap = new Map();
+    animations.filter(a => a.name != 'walking').forEach((a) => {
+      animationsMap.set(a.name, mixer.clipAction(a));
+    });
+
+    characterController = new CharacterController(model, mixer, animationsMap, thirdPersonCam, pointerLockControls, heightMatrix);
+  });
+}
 
 function changeCamera() {
   if (currentCamera == thirdPersonCam) {
@@ -229,6 +231,7 @@ function updateShadows() {
 }
 
 updateShadows();
+createSteve()
 
 const controls = new function () {
   this.fogFar = fogFar;
