@@ -20,6 +20,8 @@ export class CharacterController {
     // Moving constants
     fade = 0.2;
     walkVelocity = 10;
+    rotationSpeed = 0.05; // Velocidade de rotação do personagem
+    cameraVerticalAngle = 0; // Ângulo vertical da câmera
 
     constructor(model, mixer, animationsMap, camera, controls) {
         this.model = model;
@@ -28,6 +30,7 @@ export class CharacterController {
         this.currentAction = '';
         this.camera = camera;
         this.controls = controls; // PointerLockControls instance
+        this.updateCamera(); // Initialize camera position
     }
 
     jump() {
@@ -35,6 +38,7 @@ export class CharacterController {
         let characterY = this.model.position.y;
         let jumpHeight = 50;
         this.model.position.y = THREE.MathUtils.lerp(characterY, characterY + jumpHeight, alpha);
+        this.updateCamera();
     }
 
     update(delta, keysPressed) {
@@ -52,33 +56,88 @@ export class CharacterController {
         this.mixer.update(delta);
 
         if (this.currentAction == 'walking') {
-            // Calculate towards camera direction
-            var angleYCameraDirection = Math.atan2(
-                (this.model.position.x - this.camera.position.x),
-                (this.model.position.z - this.camera.position.z)
-            );
+            // Rotate character based on A/D or ArrowLeft/ArrowRight keys
+            if (keysPressed[A] || keysPressed[LEFT]) {
+                this.rotateCharacter(this.rotationSpeed, false); // Rotate left
+            }
+            if (keysPressed[D] || keysPressed[RIGHT]) {
+                this.rotateCharacter(-this.rotationSpeed, false); // Rotate right
+            }
 
-            // Diagonal movement angle offset
-            var directionOffset = this.directionOffset(keysPressed);
-
-            // Rotate model
-            this.rotateQuarternion.setFromAxisAngle(this.rotateAngle, angleYCameraDirection + directionOffset);
-            this.model.quaternion.rotateTowards(this.rotateQuarternion, 0.2);
-
-            this.camera.getWorldDirection(this.walkDirection);
-            this.walkDirection.y = 0; // Ensure the character doesn't move vertically
-            this.walkDirection.normalize();
-            this.walkDirection.applyAxisAngle(this.rotateAngle, directionOffset);
-
-            const moveX = this.walkDirection.x * this.walkVelocity * delta;
-            const moveZ = this.walkDirection.z * this.walkVelocity * delta;
-            this.model.position.x += moveX;
-            this.model.position.z += moveZ;
+            // Move character forward/backward based on W/S or ArrowUp/ArrowDown keys
+            if (keysPressed[W] || keysPressed[UP]) {
+                this.moveCharacter(delta, 1); // Move forward
+            }
+            if (keysPressed[S] || keysPressed[DOWN]) {
+                this.moveCharacter(delta, -1); // Move backward
+            }
 
             // Update camera position to follow the character
-            this.camera.position.x += moveX;
-            this.camera.position.z += moveZ;
+            this.updateCamera();
         }
+    }
+
+    rotateCharacter(angle, isMouseRotation) {
+        // Rotate the character around the Y-axis
+        this.model.rotateY(angle);
+
+        // Ativar animação de rotação se for uma rotação por mouse
+        if (isMouseRotation) {
+            const play = 'Armature.001|Walk_Armature_0'; // Nome da animação de rotação
+            const toPlay = this.animationsMap.get(play);
+            toPlay.play();
+            this.currentAction = 'walking';
+        }
+
+        // Update camera position to follow the character's rotation
+        this.updateCamera();
+    }
+
+    rotateCameraVertical(angle) {
+        // Atualiza o ângulo vertical da câmera
+        this.cameraVerticalAngle += angle;
+
+        // Limita o ângulo vertical para evitar rotações extremas
+        this.cameraVerticalAngle = Math.max(-Math.PI / 4, Math.min(Math.PI / 3, this.cameraVerticalAngle));
+
+        // Atualiza a posição da câmera
+        this.updateCamera();
+    }
+
+    moveCharacter(delta, direction) {
+        // Calculate movement direction based on character's current rotation
+        const forwardVector = new THREE.Vector3(0, 0, 1); // Forward vector in local space (Z positivo para frente)
+        forwardVector.applyQuaternion(this.model.quaternion); // Transform to world space
+
+        // Normalize the direction and apply velocity
+        forwardVector.normalize();
+        forwardVector.multiplyScalar(this.walkVelocity * delta * direction);
+
+        // Update character position
+        this.model.position.add(forwardVector);
+
+        // Update camera position to follow the character
+        this.updateCamera();
+    }
+
+    updateCamera() {
+        // Define a fixed offset for the camera
+        const cameraOffset = new THREE.Vector3(0, 3, -5); // Ajuste o offset da câmera
+        cameraOffset.applyQuaternion(this.model.quaternion); // Aplica a rotação do personagem ao offset
+
+        // Aplica a rotação vertical da câmera
+        const verticalRotation = new THREE.Quaternion();
+        verticalRotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.cameraVerticalAngle);
+        cameraOffset.applyQuaternion(verticalRotation);
+
+        // Calculate the desired camera position
+        const desiredPosition = this.model.position.clone().add(cameraOffset);
+
+        // Set the camera position directly
+        this.camera.position.copy(desiredPosition);
+
+        // Make the camera look at the character
+        this.camera.lookAt(this.model.position);
     }
 
     directionOffset(keysPressed) {

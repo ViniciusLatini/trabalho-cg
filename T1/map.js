@@ -90,6 +90,37 @@ window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
 
+let mouseX = 0;
+let mouseY = 0;
+let isPointerLocked = false;
+
+// Listener para o movimento do mouse
+document.addEventListener('mousemove', (event) => {
+  if (isPointerLocked) {
+    const sensitivity = 0.002; // Sensibilidade do movimento do mouse
+    // Rotação horizontal (camera + personagem)
+    mouseX += event.movementX * sensitivity;
+    if (characterController) {
+      characterController.rotateCharacter(-event.movementX * sensitivity, true); // Rotaciona o personagem
+    }
+    // Rotação vertical (câmera)
+    mouseY += event.movementY * sensitivity;
+    mouseY = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseY)); // Limita a rotação vertical
+    if (characterController) {
+      characterController.rotateCameraVertical(-event.movementY * sensitivity); // Rotaciona a câmera verticalmente
+    }
+  }
+});
+
+// Listener para o bloqueio do ponteiro
+pointerLockControls.addEventListener('lock', () => {
+  isPointerLocked = true;
+});
+
+pointerLockControls.addEventListener('unlock', () => {
+  isPointerLocked = false;
+});
+
 const mapSize = 100;
 
 let fogFar = 100;
