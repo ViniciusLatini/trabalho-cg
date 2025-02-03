@@ -96,7 +96,7 @@ export class CharacterController {
             // Verifica se o personagem atingiu o chão
             const currentXMap = Math.round(this.model.position.x) + 100;
             const currentZMap = Math.round(this.model.position.z) + 100;
-            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2;
+            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 1.5;
 
             if (this.model.position.y <= groundHeight) {
                 this.model.position.y = groundHeight; // Coloca o personagem no chão
@@ -106,7 +106,7 @@ export class CharacterController {
         } else {
             const currentXMap = Math.round(this.model.position.x) + 100;
             const currentZMap = Math.round(this.model.position.z) + 100;
-            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2;
+            const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 1.5;
 
             if (this.model.position.y > groundHeight) {
                 // Aplica a gravidade ao personagem
@@ -163,7 +163,7 @@ export class CharacterController {
         const nextZMap = Math.round(z) + 100;
 
         // Verifica se o próximo movimento é válido
-        if (this.heightMatrix[nextXMap][nextZMap] <= y - 2) {
+        if (this.heightMatrix[nextXMap][nextZMap] <= y - 1.5) {
             // Move o personagem
             this.model.position.add(forwardVector);
         }
