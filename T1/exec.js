@@ -9,7 +9,6 @@ import {
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
 import Stats from '../build/jsm/libs/stats.module.js';
 import GUI from '../libs/util/dat.gui.module.js';
-import { GLTFLoader } from '../build/jsm/loaders/GLTFLoader.js';
 import { CharacterController } from './characterController.js';
 
 let scene, renderer, inspectionCamera, currentCamera;
@@ -19,13 +18,13 @@ inspectionCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.in
 inspectionCamera.position.set(10, 9, 10);
 scene.add(inspectionCamera);
 
-// Criação da camera em 3ª pessoa
-let thirdPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-thirdPersonCam.position.set(0, 5, 5);
-scene.add(thirdPersonCam);
-currentCamera = thirdPersonCam;
+// Criação da camera em 1ª pessoa
+let firstPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+firstPersonCam.position.set(0, 15, 15);
+scene.add(firstPersonCam);
+currentCamera = firstPersonCam;
 
-const pointerLockControls = new PointerLockControls(thirdPersonCam, renderer.domElement);
+const pointerLockControls = new PointerLockControls(firstPersonCam, renderer.domElement);
 scene.add(pointerLockControls.getObject()); // Add the camera to the scene
 
 const orbitControls = new OrbitControls(inspectionCamera, renderer.domElement);
@@ -33,48 +32,28 @@ orbitControls.enableDamping = true; // Suaviza o movimento da câmera
 orbitControls.update();
 
 document.addEventListener('click', () => {
-  if (currentCamera === thirdPersonCam) {
+  if (currentCamera === firstPersonCam) {
     pointerLockControls.lock();
   }
 });
 
-// Criação do personagem
-var characterController;
-let characterModel; // Variável para armazenar o modelo do personagem
-function createSteve() {
-  new GLTFLoader().load('./utils/steve.glb', function (gltf) {
-    const model = gltf.scene;
-    model.scale.set(0.50, 0.50, 0.50);
-    model.traverse(function (child) {
-      if (child.isMesh) child.castShadow = true;
-    });
-
-    model.position.set(0, heightMatrix[100][100] + 1.5, 0);
-    scene.add(model);
-    characterModel = model; // Armazena o modelo do personagem
-
-    const animations = gltf.animations;
-    const mixer = new THREE.AnimationMixer(model);
-    const animationsMap = new Map();
-    animations.filter(a => a.name != 'walking').forEach((a) => {
-      animationsMap.set(a.name, mixer.clipAction(a));
-    });
-
-    characterController = new CharacterController(model, mixer, animationsMap, thirdPersonCam, pointerLockControls, heightMatrix);
-  });
-}
-
 function changeCamera() {
-  if (currentCamera == thirdPersonCam) {
+  if (currentCamera == firstPersonCam) {
     currentCamera = inspectionCamera;
     pointerLockControls.unlock(); // Desativa PointerLockControls
     orbitControls.enabled = true; // Ativa OrbitControls para a câmera de inspeção
   } else {
-    currentCamera = thirdPersonCam;
+    currentCamera = firstPersonCam;
     orbitControls.enabled = false; // Desativa OrbitControls
     pointerLockControls.lock(); // Ativa PointerLockControls
   }
 }
+
+const speed = 10;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
 
 const keysPressed = {};
 window.addEventListener('keydown', (event) => {
@@ -90,27 +69,14 @@ window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
 
+const mapSize = 100;
+const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
+
+var characterController = new CharacterController(firstPersonCam, pointerLockControls, heightMatrix);
+
 let mouseX = 0;
 let mouseY = 0;
 let isPointerLocked = false;
-
-// Listener para o movimento do mouse
-document.addEventListener('mousemove', (event) => {
-  if (isPointerLocked) {
-    const sensitivity = 0.002; // Sensibilidade do movimento do mouse
-    // Rotação horizontal (camera + personagem)
-    mouseX += event.movementX * sensitivity;
-    if (characterController) {
-      characterController.rotateCharacter(-event.movementX * sensitivity, true); // Rotaciona o personagem
-    }
-    // Rotação vertical (câmera)
-    mouseY += event.movementY * sensitivity;
-    mouseY = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseY)); // Limita a rotação vertical
-    if (characterController) {
-      characterController.rotateCameraVertical(-event.movementY * sensitivity); // Rotaciona a câmera verticalmente
-    }
-  }
-});
 
 // Listener para o bloqueio do ponteiro
 pointerLockControls.addEventListener('lock', () => {
@@ -121,13 +87,9 @@ pointerLockControls.addEventListener('unlock', () => {
   isPointerLocked = false;
 });
 
-const mapSize = 100;
-
 let fogFar = 100;
 scene.fog = new THREE.Fog(0xaaaaaa, 1, 96);
 scene.background = new THREE.Color(0xaaaaaa);
-
-const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
 
 const stats = new Stats();
 document.getElementById("webgl-output").appendChild(stats.domElement);
@@ -239,8 +201,6 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-createSteve();
-
 const controls = new function () {
   this.fogFar = fogFar;
 
@@ -265,14 +225,9 @@ renderTrees();
 const clock = new THREE.Clock();
 render();
 function render() {
-  let mixerUpdateDelta = clock.getDelta();
+  let delta = clock.getDelta();
   if (characterController) {
-    characterController.update(mixerUpdateDelta, keysPressed);
-    // Atualiza o target das luzes para seguir o personagem
-    if (characterModel) {
-      mainLight.target.position.copy(characterModel.position);
-      secondaryLight.target.position.copy(characterModel.position);
-    }
+    characterController.update(delta, keysPressed);
   }
   if (currentCamera === inspectionCamera) {
     orbitControls.update();
