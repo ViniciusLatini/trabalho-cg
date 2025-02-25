@@ -43,9 +43,24 @@ export class CharacterController {
             this.currentAction = 'stopped';
         }
 
+        // Calculate movement direction based on character's current rotation
+        const forwardVector = new THREE.Vector3(0, 0, 1); // Forward vector in local space (Z positivo para frente)
+        forwardVector.applyQuaternion(this.camera.quaternion); // Transform to world space
+
+        // Normalize the direction and apply velocity
+        forwardVector.normalize();
+
         if (this.currentAction == 'walking') {
             if (keysPressed[W] || keysPressed[UP]) {
-                this.controls.moveForward(this.walkVelocity * delta); // Move forward
+                forwardVector.multiplyScalar(this.walkVelocity * delta * 1);
+
+                const { x, y, z } = this.camera.position.clone().add(forwardVector);
+                const nextXMap = Math.round(x) + 100;
+                const nextZMap = Math.round(z) + 100;
+
+                if (this.heightMatrix[nextXMap][nextZMap] <= y - 2.5) {
+                    this.controls.moveForward(1 * this.walkVelocity * delta);
+                }
             }
             if (keysPressed[S] || keysPressed[DOWN]) {
                 this.controls.moveForward(-1 * this.walkVelocity * delta); // Move backward
@@ -96,29 +111,5 @@ export class CharacterController {
                 }
             }
         }
-    }
-
-    moveCharacter(delta, direction) {
-        // Calculate movement direction based on character's current rotation
-        const forwardVector = new THREE.Vector3(0, 0, 1); // Forward vector in local space (Z positivo para frente)
-        forwardVector.applyQuaternion(this.model.quaternion); // Transform to world space
-
-        // Normalize the direction and apply velocity
-        forwardVector.normalize();
-        forwardVector.multiplyScalar(this.walkVelocity * delta * direction);
-
-        // Calculate the next position in the map
-        const { x, y, z } = this.camera.position.clone().add(forwardVector);
-        const nextXMap = Math.round(x) + 100;
-        const nextZMap = Math.round(z) + 100;
-
-        // Verifica se o próximo movimento é válido
-        if (this.heightMatrix[nextXMap][nextZMap] <= y - 2.5) {
-            // Move o personagem
-            this.camera.position.add(forwardVector);
-        }
-
-        // Update camera position to follow the character
-        this.updateCamera();
     }
 }
