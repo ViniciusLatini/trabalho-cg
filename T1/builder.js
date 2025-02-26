@@ -22,6 +22,9 @@ let heightIndicatorStack = []
 let currentVox = 0
 let voxels = {}
 let jsonName = 'tree'
+const dirtSrc = './assets/dirt.png'
+const grassSideSrc = './assets/grass_block_side.png'
+const grassTopSrc = './assets/grass_block_top.png'
 
 // Listen window size changes
 window.addEventListener('resize', function () { onWindowResize(camera, renderer) }, false);
@@ -88,6 +91,48 @@ function hashPosition(position) {
   return `${x},${y},${z}`
 }
 
+function createTexturedCube(sideTextureUrl, topTextureUrl, bottomTextureUrl) {
+  const textureLoader = new THREE.TextureLoader();
+  const sideTexture = textureLoader.load(sideTextureUrl);
+  const topTexture = textureLoader.load(topTextureUrl);
+  const bottomTexture = textureLoader.load(bottomTextureUrl);
+  
+  // Configurar para repetir a textura corretamente
+  sideTexture.wrapS = THREE.RepeatWrapping;
+  sideTexture.wrapT = THREE.RepeatWrapping;
+  topTexture.wrapS = THREE.RepeatWrapping;
+  topTexture.wrapT = THREE.RepeatWrapping;
+  bottomTexture.wrapS = THREE.RepeatWrapping;
+  bottomTexture.wrapT = THREE.RepeatWrapping;
+  
+  // Ajustar intensidade da textura
+  sideTexture.encoding = THREE.sRGBEncoding;
+  topTexture.encoding = THREE.sRGBEncoding;
+  bottomTexture.encoding = THREE.sRGBEncoding;
+  
+  // Melhorar a qualidade das texturas
+  sideTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  sideTexture.magFilter = THREE.LinearFilter;
+  topTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  topTexture.magFilter = THREE.LinearFilter;
+  bottomTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  bottomTexture.magFilter = THREE.LinearFilter;
+  
+  const materials = [
+      new THREE.MeshStandardMaterial({ map: sideTexture, roughness: 0.5, metalness: 0.3 }), // Right
+      new THREE.MeshStandardMaterial({ map: sideTexture, roughness: 0.5, metalness: 0.3 }), // Left
+      new THREE.MeshStandardMaterial({ map: topTexture, roughness: 0.5, metalness: 0.3 }),  // Top
+      new THREE.MeshStandardMaterial({ map: bottomTexture, roughness: 0.5, metalness: 0.3 }), // Bottom
+      new THREE.MeshStandardMaterial({ map: sideTexture, roughness: 0.5, metalness: 0.3 }), // Front
+      new THREE.MeshStandardMaterial({ map: sideTexture, roughness: 0.5, metalness: 0.3 })  // Back
+  ];
+  
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const cube = new THREE.Mesh(geometry, materials);
+  
+  return cube;
+}
+
 function createVoxel() {
   const hash = hashPosition(line.position)
   // Verifica se já existe voxel nessa posição
@@ -95,9 +140,10 @@ function createVoxel() {
     return
 
   // Criação do voxel
-  const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
-  const cubeMaterial = setDefaultMaterial(voxelsTypes[currentVox])
-  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  // const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
+  // const cubeMaterial = setDefaultMaterial(voxelsTypes[currentVox])
+  // const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  const cube = createTexturedCube(grassSideSrc, grassTopSrc, dirtSrc)
   const { x, y, z } = line.position // Capturando posição do wireframe
   // Inserindo voxel na posição do wireframe
   cube.position.set(x, y, z)
