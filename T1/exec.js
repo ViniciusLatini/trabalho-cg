@@ -106,6 +106,12 @@ let isPointerLocked = false;
 
 const crosshair = document.getElementById('crosshair');
 
+document.addEventListener('mousedown', (event) => {
+  if (event.button === 2) {
+    characterController.jump();
+  }
+});
+
 // Listener para o bloqueio do ponteiro
 pointerLockControls.addEventListener('lock', () => {
   isPointerLocked = true;
