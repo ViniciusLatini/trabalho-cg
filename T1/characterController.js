@@ -18,41 +18,38 @@ export class CharacterController {
 
     isJumping = false;
     jumpVelocity = 0;
-    gravity = -30; // Força da gravidade
+    gravity = -30;
 
     constructor(camera, controls, heightMatrix) {
         this.currentAction = '';
         this.camera = camera;
-        this.controls = controls; // PointerLockControls instance
+        this.controls = controls;
         this.heightMatrix = heightMatrix;
     }
 
     jump() {
         if (!this.isJumping) {
             this.isJumping = true;
-            this.jumpVelocity = 15; // Velocidade inicial do pulo
+            this.jumpVelocity = 15;
         }
     }
 
     update(delta, keysPressed) {
-        const directionPressed = DIRECTIONS.some(key => keysPressed[key] == true);
+        const directionPressed = DIRECTIONS.some(key => keysPressed[key] === true);
+        this.currentAction = directionPressed ? 'walking' : 'stopped';
 
-        if (directionPressed) {
-            this.currentAction = 'walking';
-        } else {
-            this.currentAction = 'stopped';
-        }
-
-        // Calculate movement direction based on character's current rotation
-        const forwardVector = new THREE.Vector3(0, 0, -1); // Forward vector in local space (Z negativo para frente)
-        forwardVector.applyQuaternion(this.camera.quaternion); // Transform to world space
+        // Ajuste para garantir que o vetor de movimentação não seja afetado pela inclinação da câmera
+        const forwardVector = new THREE.Vector3(0, 0, -1);
+        forwardVector.applyQuaternion(this.camera.quaternion);
+        forwardVector.y = 0; // Mantém a movimentação apenas no plano XZ
         forwardVector.normalize();
 
-        const rightVector = new THREE.Vector3(1, 0, 0); // Right vector in local space
+        const rightVector = new THREE.Vector3(1, 0, 0);
         rightVector.applyQuaternion(this.camera.quaternion);
+        rightVector.y = 0;
         rightVector.normalize();
 
-        if (this.currentAction == 'walking') {
+        if (this.currentAction === 'walking') {
             if (keysPressed[W] || keysPressed[UP]) {
                 this.moveWithCollision(forwardVector, delta);
             }
@@ -67,7 +64,6 @@ export class CharacterController {
             }
         }
 
-        // Apply gravity and handle jumping
         this.applyGravity(delta);
     }
 
@@ -84,17 +80,15 @@ export class CharacterController {
 
     applyGravity(delta) {
         if (this.isJumping) {
-            // Atualiza a velocidade do pulo de acordo com a gravidade
             this.jumpVelocity += this.gravity * delta;
             this.camera.position.y += this.jumpVelocity * delta;
 
-            // Verifica se o personagem atingiu o chão
             const currentXMap = Math.round(this.camera.position.x) + 100;
             const currentZMap = Math.round(this.camera.position.z) + 100;
             const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2.5;
 
             if (this.camera.position.y <= groundHeight) {
-                this.camera.position.y = groundHeight; // Coloca o personagem no chão
+                this.camera.position.y = groundHeight;
                 this.isJumping = false;
                 this.jumpVelocity = 0;
             }
@@ -104,12 +98,11 @@ export class CharacterController {
             const groundHeight = this.heightMatrix[currentXMap][currentZMap] + 2.5;
 
             if (this.camera.position.y > groundHeight) {
-                // Aplica a gravidade ao personagem
                 this.jumpVelocity += this.gravity * delta;
                 this.camera.position.y += this.jumpVelocity * delta;
 
                 if (this.camera.position.y <= groundHeight) {
-                    this.camera.position.y = groundHeight; // Coloca o personagem no chão
+                    this.camera.position.y = groundHeight;
                     this.jumpVelocity = 0;
                 }
             }
