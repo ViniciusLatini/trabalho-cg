@@ -216,7 +216,7 @@ const controls = new function () {
 }
 
 const gui = new GUI();
-gui.add(controls, 'fogFar', 20, 200)
+gui.add(controls, 'fogFar', 20, 500)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
 
