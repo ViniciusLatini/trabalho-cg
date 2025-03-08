@@ -131,6 +131,9 @@ const textureLoader = new THREE.TextureLoader();
 const dirtSrc = './assets/dirt.png'
 const grassSideSrc = './assets/grass_block_side.png'
 const grassTopSrc = './assets/grass_block_top.png'
+const leavesSrc = './assets/leaves.png'
+const logSrc = './assets/log.png'
+const logTopSrc = './assets/log_top.png'
 
 function createIntanceMeshTexture(sideTextureSrc, topTextureSrc, bottomTextureSrc, amount) {
   const sideTexture = textureLoader.load(sideTextureSrc);
@@ -226,20 +229,55 @@ async function loadTree(ref, idx) {
 
   data.forEach(({ position, mesh }) => {
     const color = mesh.materials[0].color;
-    const material = new THREE.MeshLambertMaterial({ color });
 
-    const voxel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
-
-    // Ajuste de posição baseado no referencial
-    voxel.position.set(
+    if(color == 25600){
+      const leavesTexture = textureLoader.load(leavesSrc);
+      leavesTexture.wrapS = leavesTexture.wrapT = THREE.RepeatWrapping;
+      leavesTexture.encoding = THREE.sRGBEncoding;
+      
+      leavesTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      leavesTexture.magFilter = THREE.LinearFilter;
+      
+      const leavesMaterial = [
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Right
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Left
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }),  // Top
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Bottom
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Front
+        new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true })  // Back
+      ];
+      const leavesVoxel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), leavesMaterial);
+      // Ajuste de posição baseado no referencial
+      leavesVoxel.position.set(
       position.x + ref.x + 0.5,
       position.y + ref.y,
       position.z + ref.z + 0.5
-    );
-    voxel.castShadow = true;
-    group.add(voxel);
+      );
+      leavesVoxel.castShadow = true;
+      group.add(leavesVoxel);
+    }
+    if(color == 6900535){
+      const logTexture = textureLoader.load(logSrc);
+      const logTopTexture = textureLoader.load(logTopSrc);
+      const logMaterial = [
+        new THREE.MeshLambertMaterial({ map: logTexture }), // Right
+        new THREE.MeshLambertMaterial({ map: logTexture }), // Left
+        new THREE.MeshLambertMaterial({ map: logTopTexture }),  // Top
+        new THREE.MeshLambertMaterial({ map: logTopTexture }), // Bottom
+        new THREE.MeshLambertMaterial({ map: logTexture }), // Front
+        new THREE.MeshLambertMaterial({ map: logTexture })  // Back
+      ];
+      const logVoxel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), logMaterial);
+      // Ajuste de posição baseado no referencial
+      logVoxel.position.set(
+      position.x + ref.x + 0.5,
+      position.y + ref.y,
+      position.z + ref.z + 0.5
+      );
+      logVoxel.castShadow = true;
+      group.add(logVoxel);
+    }
   });
-
   scene.add(group);
 }
 
