@@ -101,13 +101,49 @@ document.getElementById("webgl-output").appendChild(stats.domElement);
 window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const textureLoader = new THREE.TextureLoader();
+const dirtSrc = './assets/dirt.png'
+const grassSideSrc = './assets/grass_block_side.png'
+const grassTopSrc = './assets/grass_block_top.png'
 
-const grassMaterial = new THREE.MeshLambertMaterial({ color: '#226923' });
-// Criação de instâncias para cada material
-const grassMesh = new THREE.InstancedMesh(boxGeometry, grassMaterial, 40000);
+function createIntanceMeshTexture(sideTextureSrc, topTextureSrc, bottomTextureSrc, amount) {
+  const sideTexture = textureLoader.load(sideTextureSrc);
+  const topTexture = textureLoader.load(topTextureSrc);
+  const bottomTexture = textureLoader.load(bottomTextureSrc);
+  
+  // Configurar as texturas
+  sideTexture.wrapS = sideTexture.wrapT = THREE.RepeatWrapping;
+  topTexture.wrapS = topTexture.wrapT = THREE.RepeatWrapping;
+  bottomTexture.wrapS = bottomTexture.wrapT = THREE.RepeatWrapping;
+  
+  sideTexture.encoding = topTexture.encoding = bottomTexture.encoding = THREE.sRGBEncoding;
+  
+  sideTexture.minFilter = topTexture.minFilter = bottomTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  sideTexture.magFilter = topTexture.magFilter = bottomTexture.magFilter = THREE.LinearFilter;
+  
+  const material = [
+    new THREE.MeshLambertMaterial({ map: sideTexture }), // Right
+    new THREE.MeshLambertMaterial({ map: sideTexture }), // Left
+    new THREE.MeshLambertMaterial({ map: topTexture }),  // Top
+    new THREE.MeshLambertMaterial({ map: bottomTexture }), // Bottom
+    new THREE.MeshLambertMaterial({ map: sideTexture }), // Front
+    new THREE.MeshLambertMaterial({ map: sideTexture })  // Back
+  ];
+
+  return new THREE.InstancedMesh(boxGeometry, material, amount);
+}
+
+const grassMesh = createIntanceMeshTexture(grassSideSrc, grassTopSrc, dirtSrc, 40000);
+const dirtMesh = createIntanceMeshTexture(dirtSrc, dirtSrc, dirtSrc, 40000);
+
 // Contadores de instâncias
 let grassIndex = 0;
+let dirtIndex = 0;
+
 // Indicando para GPU que essas informações serão atualizadas com frequência
+dirtMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+dirtMesh.receiveShadow = true;
+dirtMesh.castShadow = true;
 grassMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 grassMesh.receiveShadow = true;
 grassMesh.castShadow = true;
@@ -128,11 +164,14 @@ function generateProceduralMap() {
       const height = Math.round(noise * 20);
       heightMatrix[i + mapSize][j + mapSize] = height;
       setInstance(grassMesh, grassIndex++, { x: i, y: height, z: j });
+      setInstance(dirtMesh, dirtIndex++, { x: i, y: height-1, z: j });
     }
   }
 
   grassMesh.instanceMatrix.needsUpdate = true;
+  dirtMesh.instanceMatrix.needsUpdate = true;
   scene.add(grassMesh);
+  scene.add(dirtMesh);
 }
 
 async function loadTree(ref, idx) {
