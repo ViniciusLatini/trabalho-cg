@@ -133,6 +133,17 @@ function createIntanceMeshTexture(sideTextureSrc, topTextureSrc, bottomTextureSr
   return new THREE.InstancedMesh(boxGeometry, material, amount);
 }
 
+const waterMaterial = new THREE.MeshPhysicalMaterial({
+  color: 0x3FA9F5,
+  transparent: true,
+  opacity: 0.6,
+  roughness: 0.3,
+  metalness: 0.1,
+  reflectivity: 0.5,
+  transmission: 0.9, 
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.1,
+});
 const grassMesh = createIntanceMeshTexture(grassSideSrc, grassTopSrc, dirtSrc, 40000);
 const dirtMesh = createIntanceMeshTexture(dirtSrc, dirtSrc, dirtSrc, 40000);
 
@@ -163,7 +174,14 @@ function generateProceduralMap() {
       const noise = Math.pow((simplex.noise(i / 70, j / 70) + 1) / 2, 1.5);
       const height = Math.round(noise * 20);
       heightMatrix[i + mapSize][j + mapSize] = height;
-      setInstance(grassMesh, grassIndex++, { x: i, y: height, z: j });
+      if (height < 1) {
+        const waterBlock = new THREE.Mesh(boxGeometry, waterMaterial);
+        waterBlock.position.set(i, height, j);
+        scene.add(waterBlock);
+      } else {
+        setInstance(grassMesh, grassIndex++, { x: i, y: height, z: j });
+      }
+
       setInstance(dirtMesh, dirtIndex++, { x: i, y: height-1, z: j });
     }
   }
