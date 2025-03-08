@@ -68,7 +68,19 @@ window.addEventListener('keydown', (event) => {
     if(backgroundMusic.isPlaying) backgroundMusic.pause();
     else backgroundMusic.play();
   }
+  if (event.key == 'f' || event.key == 'F') {
+    toggleFog();
+  }
 }, false);
+
+function toggleFog() {
+  if (scene.fog) {
+    scene.fog = null; // Desabilita a neblina
+  } else {
+    scene.fog = new THREE.Fog(0xaaaaaa, 1, 96); // Habilita a neblina
+  }
+}
+
 window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
@@ -388,17 +400,23 @@ function onPointerMove(event) {
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
 
-// Configuração da Música de Fundo
+// Configuração da Música de Fundo e SFX de Remoção de Bloco
 const audioListener = new THREE.AudioListener();
 firstPersonCam.add(audioListener);
 const audioLoader = new THREE.AudioLoader();
 const backgroundMusic = new THREE.Audio(audioListener);
+const removeSFX = new THREE.Audio(audioListener);
 
 audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer){
   backgroundMusic.setBuffer(buffer);
   backgroundMusic.setLoop(true);
   backgroundMusic.setVolume(0.4);
   backgroundMusic.play();
+})
+audioLoader.load('./sfx/pop.mp3', function (buffer){
+  removeSFX.setBuffer(buffer);
+  removeSFX.setLoop(false);
+  removeSFX.setVolume(0.5);
 })
 
 document.addEventListener('click', (event) => {
@@ -410,6 +428,7 @@ document.addEventListener('click', (event) => {
         selectedVoxel.instanceMatrix.needsUpdate = true;
         const {x, z} = highlightBox.position
         heightMatrix[x + mapSize][z + mapSize] -= 1; 
+        removeSFX.play();
       }
     } 
   }
