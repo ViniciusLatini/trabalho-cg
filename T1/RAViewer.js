@@ -41,26 +41,84 @@ function updateAR()
 	scene.visible = camera.visible   
 }
 
+function loadTextureFromBase64(url, callback) {
+   const texture = new THREE.Texture();
+   const image = new Image();
+   image.src = url;
+   image.onload = () => {
+       texture.image = image;
+       texture.needsUpdate = true; // Atualiza a textura após carregar a imagem
+       callback(texture);
+   };
+   image.onerror = (error) => {
+       console.error('Erro ao carregar a textura:', error);
+       callback(null);
+   };
+}
+
 async function createHouse()
 {
    const response = await fetch(`./assets/house.json`);
    const data = await response.json();
-   const group = new THREE.Group();
+   const cubeGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1)
 
-   data.forEach(({position, mesh}) =>{
-      const material = mesh.textures[0];
-      const voxel = mesh;
+    // Mapeamento de UUIDs das imagens para URLs Base64
+    const imageMap = new Map();
+    data.forEach(obj => {
+        if (obj.mesh.images) {
+            obj.mesh.images.forEach(image => {
+                imageMap.set(image.uuid, image.url); // Mapeia UUID da imagem para URL Base64
+            });
+        }
+    });
 
-      // Ajuste de posição baseado no referencial
+    // Carregar todas as texturas primeiro
+    const textureMap = new Map();
+    for (const obj of data) {
+        for (const mat of obj.mesh.materials) {
+            const textureUUID = mat.map; // UUID da textura
+            if (!textureMap.has(textureUUID)) {
+                const imageURL = imageMap.get(textureUUID); // URL Base64 da imagem
+                if (imageURL) {
+                    await new Promise((resolve) => {
+                        loadTextureFromBase64(imageURL, (texture) => {
+                            if (texture) {
+                                textureMap.set(textureUUID, texture);
+                            }
+                            resolve();
+                        });
+                    });
+                }
+            }
+        }
+    }
+
+    // Criar os objetos após carregar todas as texturas
+    data.forEach(obj => {
+        const geometry = new THREE.BoxGeometry(
+            obj.mesh.geometries[0].width,
+            obj.mesh.geometries[0].height,
+            obj.mesh.geometries[0].depth
+        );
+
+        const materials = obj.mesh.materials.map(mat => {
+            const textureUUID = mat.map; // UUID da textura
+            const texture = textureMap.get(textureUUID); // Textura carregada
+
+            return new THREE.MeshStandardMaterial({
+                map: texture // Aplica a textura
+            });
+        });
+
+      const voxel = new THREE.Mesh(cubeGeometry, materials);
+      
       voxel.position.set(
-         position.x / 10,
-         position.y / 10,
-         position.z / 10
+         obj.position.x / 10,
+         obj.position.y / 10,
+         obj.position.z / 10
       );
-      voxel.castShadow = true;
-      group.add(voxel);
-   })
-   scene.add(group);
+      scene.add(voxel);
+   });
 }
 
 function setARStuff()
