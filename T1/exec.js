@@ -189,6 +189,21 @@ scene.add(secondaryLight);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
 
+// Configuração do Skybox
+// Carregando o cubemap
+const cubeMapLoader = new THREE.CubeTextureLoader();
+const cubeMapTexture = cubeMapLoader.load([
+    './assets/skybox/px.png', // direita
+    './assets/skybox/nx.png', // esquerda
+    './assets/skybox/py.png', // topo
+    './assets/skybox/ny.png', // base
+    './assets/skybox/pz.png', // frente
+    './assets/skybox/nz.png'  // trás
+]);
+
+// Aplicando o cubemap como fundo da cena
+scene.background = cubeMapTexture;
+
 // Helper para visualização do volume de sombra
 const shadowHelper = new THREE.CameraHelper(mainLight.shadow.camera);
 shadowHelper.visible = false; // Inicialmente desativado
@@ -216,7 +231,7 @@ const controls = new function () {
 }
 
 const gui = new GUI();
-gui.add(controls, 'fogFar', 20, 500)
+gui.add(controls, 'fogFar', 20, 200)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
 
