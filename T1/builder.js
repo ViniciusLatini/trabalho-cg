@@ -50,7 +50,7 @@ scene.add(grid);
 const boxWireframe = new THREE.BoxGeometry(1, 1, 1);
 const wireframe = new THREE.WireframeGeometry(boxWireframe);
 const wireframeMaterial = new THREE.LineBasicMaterial({
-  color: voxelsTypes[currentVox],
+  color: voxelsTypes[currentVox].color,
   depthTest: false,
   opacity: 0.5,
   transparent: true
@@ -83,7 +83,7 @@ function changeVoxType(increment) {
     currentVox = 0
   else if (currentVox === -1)
     currentVox = voxelsTypes.length - 1
-  wireframeMaterial.color.set(voxelsTypes[currentVox])
+  wireframeMaterial.color.set(voxelsTypes[currentVox].color)
 }
 
 function hashPosition(position) {
@@ -143,7 +143,7 @@ function createVoxel() {
   // const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
   // const cubeMaterial = setDefaultMaterial(voxelsTypes[currentVox])
   // const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-  const cube = createTexturedCube(grassSideSrc, grassTopSrc, dirtSrc)
+  const cube = createTexturedCube(voxelsTypes[currentVox].sideSrc, voxelsTypes[currentVox].topSrc, voxelsTypes[currentVox].botSrc)
   const { x, y, z } = line.position // Capturando posição do wireframe
   // Inserindo voxel na posição do wireframe
   cube.position.set(x, y, z)
