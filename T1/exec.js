@@ -278,11 +278,42 @@ gui.add(controls, 'fogFar', 20, 200)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
 
+// Configuração do Raycaster
+let highlightBox = null;
+const highColor = new THREE.Color().setHex(0xffffff);
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function onPointerMove(event) {
+	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+
+function removeHighlight() {
+  if (highlightBox) {
+    scene.remove(highlightBox); // Remove o destaque
+    highlightBox = null;
+  }
+}
+
 generateProceduralMap();
 renderTrees();
 const clock = new THREE.Clock();
 render();
 function render() {
+  raycaster.setFromCamera(pointer, firstPersonCam);
+
+  const intersects = raycaster.intersectObjects(scene.children, false);
+  if (intersects.length > 0) {
+    const instanceId = intersects[0].instanceId;
+    const selectedVoxel = intersects[0].object;
+    if(selectedVoxel.isMesh){
+      console.log("é uma mesh");
+    }
+  } else {
+    removeHighlight();
+  }
+
   let delta = clock.getDelta();
   if (characterController) {
     characterController.update(delta, keysPressed);
