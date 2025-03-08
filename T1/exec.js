@@ -64,10 +64,36 @@ window.addEventListener('keydown', (event) => {
   if (event.key == "c" || event.key == "C") {
     changeCamera();
   }
+  if (event.key == 'q' || event.key == " Q"){
+    if(backgroundMusic.isPlaying) backgroundMusic.pause();
+    else backgroundMusic.play();
+  }
 }, false);
 window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
+
+// Função para deslocar uma instância para baixo
+function moveInstanceDown(instancedMesh, instanceId, matrix) {
+  // Obtém a posição atual da instância
+  const position = new THREE.Vector3();
+  const quaternion = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+  matrix.decompose(position, quaternion, scale);
+
+  // Desloca a posição em 50 unidades para baixo no eixo Y
+  position.y -= 50;
+
+  // Cria uma nova matriz com a posição atualizada
+  const newMatrix = new THREE.Matrix4();
+  newMatrix.compose(position, quaternion, scale);
+
+  // Atualiza a matriz da instância na InstancedMesh
+  instancedMesh.setMatrixAt(instanceId, newMatrix);
+
+  // Marca a matriz de instâncias como necessitando de atualização
+  instancedMesh.instanceMatrix.needsUpdate = true;
+}
 
 const mapSize = 100;
 const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
@@ -309,6 +335,7 @@ scene.add(highlightBox);
 
 // Configuração do Raycaster
 const raycaster = new THREE.Raycaster();
+raycaster.far = 7;
 const pointer = new THREE.Vector2();
 
 function onPointerMove(event) {
@@ -316,16 +343,30 @@ function onPointerMove(event) {
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
 
+// Configuração da Música de Fundo
+const audioListener = new THREE.AudioListener();
+firstPersonCam.add(audioListener);
+const audioLoader = new THREE.AudioLoader();
+const backgroundMusic = new THREE.Audio(audioListener);
+
+audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer){
+  backgroundMusic.setBuffer(buffer);
+  backgroundMusic.setLoop(true);
+  backgroundMusic.setVolume(0.4);
+  backgroundMusic.play();
+})
+
 generateProceduralMap();
 renderTrees();
 const clock = new THREE.Clock();
+var selectedVoxel;
 render();
 function render() {
   raycaster.setFromCamera(pointer, firstPersonCam);
   const intersects = raycaster.intersectObjects(scene.children, false);
   if (intersects.length > 0) {
     const instanceId = intersects[0].instanceId;
-    const selectedVoxel = intersects[0].object;
+    selectedVoxel = intersects[0].object;
     if(selectedVoxel.isInstancedMesh){
       const position = new THREE.Vector3();
       const tMatrix = new THREE.Matrix4();
