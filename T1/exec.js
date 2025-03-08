@@ -78,13 +78,17 @@ let mouseX = 0;
 let mouseY = 0;
 let isPointerLocked = false;
 
+const crosshair = document.getElementById('crosshair');
+
 // Listener para o bloqueio do ponteiro
 pointerLockControls.addEventListener('lock', () => {
   isPointerLocked = true;
+  crosshair.style.display = 'block'; // Mostra a mira
 });
 
 pointerLockControls.addEventListener('unlock', () => {
   isPointerLocked = false;
+  crosshair.style.display = 'none'; // Oculta a mira
 });
 
 let fogFar = 100;
