@@ -213,6 +213,7 @@ function generateProceduralMap() {
         const waterBlock = new THREE.Mesh(boxGeometry, waterMaterial);
         waterBlock.position.set(i, height, j);
         scene.add(waterBlock);
+        heightMatrix[i + mapSize][j + mapSize] = height - 1;
       } else {
         setInstance(grassMesh, grassIndex++, { x: i, y: height, z: j });
       }
@@ -400,6 +401,20 @@ audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer){
   backgroundMusic.play();
 })
 
+document.addEventListener('click', (event) => {
+  if (event.button === 0 && selectedVoxel) { // Clique esquerdo
+    if (selectedVoxel?.isInstancedMesh) {
+      const instanceId = raycaster.intersectObjects([selectedVoxel], false)[0]?.instanceId;
+      if (instanceId !== undefined) {
+        selectedVoxel.setMatrixAt(instanceId, new THREE.Matrix4().makeTranslation(9999, 9999, 9999));
+        selectedVoxel.instanceMatrix.needsUpdate = true;
+        const {x, z} = highlightBox.position
+        heightMatrix[x + mapSize][z + mapSize] -= 1; 
+      }
+    } 
+  }
+});
+
 generateProceduralMap();
 renderTrees();
 const clock = new THREE.Clock();
@@ -409,9 +424,9 @@ function render() {
   raycaster.setFromCamera(pointer, firstPersonCam);
   const intersects = raycaster.intersectObjects(scene.children, false);
   if (intersects.length > 0) {
-    const instanceId = intersects[0].instanceId;
-    selectedVoxel = intersects[0].object;
-    if(selectedVoxel.isInstancedMesh){
+    const instanceId = intersects[1]?.instanceId;
+    selectedVoxel = intersects[1]?.object;
+    if(selectedVoxel?.isInstancedMesh){
       const position = new THREE.Vector3();
       const tMatrix = new THREE.Matrix4();
       selectedVoxel.getMatrixAt(instanceId, tMatrix);
