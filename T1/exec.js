@@ -296,9 +296,18 @@ gui.add(controls, 'fogFar', 20, 200)
   .name("Fog Far")
   .onChange(function (e) { controls.updatefogFar(); });
 
+// Configuração da Caixa de Destaque
+const highlightMaterial = new THREE.MeshBasicMaterial({
+  color: 0xeeeeee,
+  transparent: true,
+  opacity: 0.5
+});
+const highlightGeometry = new THREE.BoxGeometry(1.01, 1.01, 1.01); // Aumente ligeiramente o tamanho para evitar z-fighting
+let highlightBox = new THREE.Mesh(highlightGeometry, highlightMaterial);
+highlightBox.visible = false; // Inicialmente invisível
+scene.add(highlightBox);
+
 // Configuração do Raycaster
-let highlightBox = null;
-const highColor = new THREE.Color().setHex(0xffffff);
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
@@ -307,31 +316,27 @@ function onPointerMove(event) {
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
 
-function removeHighlight() {
-  if (highlightBox) {
-    scene.remove(highlightBox); // Remove o destaque
-    highlightBox = null;
-  }
-}
-
 generateProceduralMap();
 renderTrees();
 const clock = new THREE.Clock();
 render();
 function render() {
   raycaster.setFromCamera(pointer, firstPersonCam);
-
   const intersects = raycaster.intersectObjects(scene.children, false);
   if (intersects.length > 0) {
     const instanceId = intersects[0].instanceId;
     const selectedVoxel = intersects[0].object;
-    if(selectedVoxel.isMesh){
-      console.log("é uma mesh");
+    if(selectedVoxel.isInstancedMesh){
+      const position = new THREE.Vector3();
+      const tMatrix = new THREE.Matrix4();
+      selectedVoxel.getMatrixAt(instanceId, tMatrix);
+      position.setFromMatrixPosition(tMatrix);
+      highlightBox.position.copy(position);
+      highlightBox.visible = true;
     }
-  } else {
-    removeHighlight();
+  }else{
+    highlightBox.visible = false;
   }
-
   let delta = clock.getDelta();
   if (characterController) {
     characterController.update(delta, keysPressed);
@@ -343,4 +348,4 @@ function render() {
   renderer.render(scene, currentCamera);
   grassMesh.frustumCulled = true;
   stats.update();
-}
+  }
