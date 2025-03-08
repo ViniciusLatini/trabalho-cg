@@ -44,32 +44,26 @@ export class CharacterController {
         }
 
         // Calculate movement direction based on character's current rotation
-        const forwardVector = new THREE.Vector3(0, 0, 1); // Forward vector in local space (Z positivo para frente)
+        const forwardVector = new THREE.Vector3(0, 0, -1); // Forward vector in local space (Z negativo para frente)
         forwardVector.applyQuaternion(this.camera.quaternion); // Transform to world space
-
-        // Normalize the direction and apply velocity
         forwardVector.normalize();
+
+        const rightVector = new THREE.Vector3(1, 0, 0); // Right vector in local space
+        rightVector.applyQuaternion(this.camera.quaternion);
+        rightVector.normalize();
 
         if (this.currentAction == 'walking') {
             if (keysPressed[W] || keysPressed[UP]) {
-                forwardVector.multiplyScalar(this.walkVelocity * delta * 1);
-
-                const { x, y, z } = this.camera.position.clone().add(forwardVector);
-                const nextXMap = Math.round(x) + 100;
-                const nextZMap = Math.round(z) + 100;
-
-                if (this.heightMatrix[nextXMap][nextZMap] <= y - 2.5) {
-                    this.controls.moveForward(1 * this.walkVelocity * delta);
-                }
+                this.moveWithCollision(forwardVector, delta);
             }
             if (keysPressed[S] || keysPressed[DOWN]) {
-                this.controls.moveForward(-1 * this.walkVelocity * delta); // Move backward
+                this.moveWithCollision(forwardVector.clone().negate(), delta);
             }
             if (keysPressed[A] || keysPressed[LEFT]) {
-                this.controls.moveRight(-1 * this.walkVelocity * delta) // Move left
+                this.moveWithCollision(rightVector.clone().negate(), delta);
             }
             if (keysPressed[D] || keysPressed[RIGHT]) {
-                this.controls.moveRight(this.walkVelocity * delta); // Move right
+                this.moveWithCollision(rightVector, delta);
             }
         }
 
@@ -77,12 +71,21 @@ export class CharacterController {
         this.applyGravity(delta);
     }
 
+    moveWithCollision(direction, delta) {
+        direction.multiplyScalar(this.walkVelocity * delta);
+        const { x, y, z } = this.camera.position.clone().add(direction);
+        const nextXMap = Math.round(x) + 100;
+        const nextZMap = Math.round(z) + 100;
+
+        if (this.heightMatrix[nextXMap][nextZMap] <= y - 2.5) {
+            this.camera.position.add(direction);
+        }
+    }
+
     applyGravity(delta) {
         if (this.isJumping) {
             // Atualiza a velocidade do pulo de acordo com a gravidade
             this.jumpVelocity += this.gravity * delta;
-
-            // Atualiza a posição do personagem
             this.camera.position.y += this.jumpVelocity * delta;
 
             // Verifica se o personagem atingiu o chão
