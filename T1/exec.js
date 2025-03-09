@@ -3,7 +3,6 @@ import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.j
 import { OrbitControls } from '../build/jsm/controls/OrbitControls.js'; // Import OrbitControls
 import {
   initRenderer,
-  initDefaultBasicLight,
   onWindowResize,
 } from "../libs/util/util.js";
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
@@ -12,8 +11,8 @@ import GUI from '../libs/util/dat.gui.module.js';
 import { CharacterController } from './characterController.js';
 
 let scene, renderer, inspectionCamera, currentCamera;
-scene = new THREE.Scene();    
-renderer = initRenderer();    
+scene = new THREE.Scene();
+renderer = initRenderer();
 inspectionCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 inspectionCamera.position.set(10, 9, 10);
 scene.add(inspectionCamera);
@@ -28,31 +27,31 @@ crosshair.style.display = 'none';
 
 // Create the loading manager
 const loadingManager = new THREE.LoadingManager(() => {
-  let loadingScreen = document.getElementById( 'loading-screen' );
+  let loadingScreen = document.getElementById('loading-screen');
   loadingScreen.transition = 0;
-  loadingScreen.style.setProperty('--speed1', '0');  
-  loadingScreen.style.setProperty('--speed2', '0');  
-  loadingScreen.style.setProperty('--speed3', '0');      
+  loadingScreen.style.setProperty('--speed1', '0');
+  loadingScreen.style.setProperty('--speed2', '0');
+  loadingScreen.style.setProperty('--speed3', '0');
 
-  let button  = document.getElementById("myBtn")
+  let button = document.getElementById("myBtn")
   button.style.backgroundColor = 'Green';
   button.innerHTML = 'Enter';
   button.addEventListener("click", onButtonPressed);
 });
 
 function onButtonPressed() {
-  const loadingScreen = document.getElementById( 'loading-screen' );
+  const loadingScreen = document.getElementById('loading-screen');
   loadingScreen.transition = 0;
-  loadingScreen.classList.add( 'fade-out' );
-  loadingScreen.addEventListener( 'transitionend', (e) => {
+  loadingScreen.classList.add('fade-out');
+  loadingScreen.addEventListener('transitionend', (e) => {
     const element = e.target;
-    element.remove();  
-  });  
+    element.remove();
+  });
   // Play the background music
   backgroundMusic.play();
 }
 
-function loadTexture(manager, object){
+function loadTexture(manager, object) {
   const loader = new THREE.TextureLoader(manager);
   const loadedTexture = loader.load(object);
   return loadedTexture;
@@ -83,12 +82,6 @@ function changeCamera() {
   }
 }
 
-const speed = 10;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-
 const keysPressed = {};
 window.addEventListener('keydown', (event) => {
   (keysPressed)[event.key.toLowerCase()] = true;
@@ -98,8 +91,8 @@ window.addEventListener('keydown', (event) => {
   if (event.key == "c" || event.key == "C") {
     changeCamera();
   }
-  if (event.key == 'q' || event.key == " Q"){
-    if(backgroundMusic.isPlaying) backgroundMusic.pause();
+  if (event.key == 'q' || event.key == " Q") {
+    if (backgroundMusic.isPlaying) backgroundMusic.pause();
     else backgroundMusic.play();
   }
   if (event.key == 'f' || event.key == 'F') {
@@ -119,36 +112,10 @@ window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
 
-// Função para deslocar uma instância para baixo
-function moveInstanceDown(instancedMesh, instanceId, matrix) {
-  // Obtém a posição atual da instância
-  const position = new THREE.Vector3();
-  const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
-  matrix.decompose(position, quaternion, scale);
-
-  // Desloca a posição em 50 unidades para baixo no eixo Y
-  position.y -= 50;
-
-  // Cria uma nova matriz com a posição atualizada
-  const newMatrix = new THREE.Matrix4();
-  newMatrix.compose(position, quaternion, scale);
-
-  // Atualiza a matriz da instância na InstancedMesh
-  instancedMesh.setMatrixAt(instanceId, newMatrix);
-
-  // Marca a matriz de instâncias como necessitando de atualização
-  instancedMesh.instanceMatrix.needsUpdate = true;
-}
-
 const mapSize = 100;
 const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
 
 var characterController = new CharacterController(firstPersonCam, pointerLockControls, heightMatrix);
-
-let mouseX = 0;
-let mouseY = 0;
-let isPointerLocked = false;
 
 document.addEventListener('mousedown', (event) => {
   if (event.button === 2) {
@@ -177,7 +144,6 @@ document.getElementById("webgl-output").appendChild(stats.domElement);
 window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-const textureLoader = new THREE.TextureLoader();
 const dirtSrc = './assets/dirt.png'
 const grassSideSrc = './assets/grass_block_side.png'
 const grassTopSrc = './assets/grass_block_top.png'
@@ -186,21 +152,21 @@ const logSrc = './assets/log.png'
 const logTopSrc = './assets/log_top.png'
 
 function createIntanceMeshTexture(sideTextureSrc, topTextureSrc, bottomTextureSrc, amount) {
-  
+
   const sideTexture = loadTexture(loadingManager, sideTextureSrc);
   const topTexture = loadTexture(loadingManager, topTextureSrc);
   const bottomTexture = loadTexture(loadingManager, bottomTextureSrc);
-  
+
   // Configurar as texturas
   sideTexture.wrapS = sideTexture.wrapT = THREE.RepeatWrapping;
   topTexture.wrapS = topTexture.wrapT = THREE.RepeatWrapping;
   bottomTexture.wrapS = bottomTexture.wrapT = THREE.RepeatWrapping;
-  
+
   sideTexture.encoding = topTexture.encoding = bottomTexture.encoding = THREE.sRGBEncoding;
-  
+
   sideTexture.minFilter = topTexture.minFilter = bottomTexture.minFilter = THREE.LinearMipmapLinearFilter;
   sideTexture.magFilter = topTexture.magFilter = bottomTexture.magFilter = THREE.LinearFilter;
-  
+
   const material = [
     new THREE.MeshLambertMaterial({ map: sideTexture }), // Right
     new THREE.MeshLambertMaterial({ map: sideTexture }), // Left
@@ -220,7 +186,7 @@ const waterMaterial = new THREE.MeshPhysicalMaterial({
   roughness: 0.3,
   metalness: 0.1,
   reflectivity: 0.5,
-  transmission: 0.9, 
+  transmission: 0.9,
   clearcoat: 1.0,
   clearcoatRoughness: 0.1,
 });
@@ -263,7 +229,7 @@ function generateProceduralMap() {
         setInstance(grassMesh, grassIndex++, { x: i, y: height, z: j });
       }
 
-      setInstance(dirtMesh, dirtIndex++, { x: i, y: height-1, z: j });
+      setInstance(dirtMesh, dirtIndex++, { x: i, y: height - 1, z: j });
     }
   }
 
@@ -282,14 +248,14 @@ async function loadTree(ref, idx) {
   data.forEach(({ position, mesh }) => {
     const color = mesh.materials[0].color;
 
-    if(color == 25600){
+    if (color == 25600) {
       const leavesTexture = loadTexture(loadingManager, leavesSrc);
       leavesTexture.wrapS = leavesTexture.wrapT = THREE.RepeatWrapping;
       leavesTexture.encoding = THREE.sRGBEncoding;
-      
+
       leavesTexture.minFilter = THREE.LinearMipmapLinearFilter;
       leavesTexture.magFilter = THREE.LinearFilter;
-      
+
       const leavesMaterial = [
         new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Right
         new THREE.MeshLambertMaterial({ map: leavesTexture, transparent: true }), // Left
@@ -301,14 +267,14 @@ async function loadTree(ref, idx) {
       const leavesVoxel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), leavesMaterial);
       // Ajuste de posição baseado no referencial
       leavesVoxel.position.set(
-      position.x + ref.x + 0.5,
-      position.y + ref.y,
-      position.z + ref.z + 0.5
+        position.x + ref.x + 0.5,
+        position.y + ref.y,
+        position.z + ref.z + 0.5
       );
       leavesVoxel.castShadow = true;
       group.add(leavesVoxel);
     }
-    if(color == 6900535){
+    if (color == 6900535) {
       const logTexture = loadTexture(loadingManager, logSrc)
       const logTopTexture = loadTexture(loadingManager, logTopSrc);
       const logMaterial = [
@@ -322,9 +288,9 @@ async function loadTree(ref, idx) {
       const logVoxel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), logMaterial);
       // Ajuste de posição baseado no referencial
       logVoxel.position.set(
-      position.x + ref.x + 0.5,
-      position.y + ref.y,
-      position.z + ref.z + 0.5
+        position.x + ref.x + 0.5,
+        position.y + ref.y,
+        position.z + ref.z + 0.5
       );
       logVoxel.castShadow = true;
       group.add(logVoxel);
@@ -370,12 +336,12 @@ scene.add(ambientLight);
 // Carregando o cubemap
 const cubeMapLoader = new THREE.CubeTextureLoader();
 const cubeMapTexture = cubeMapLoader.load([
-    './assets/skybox/px.png', // direita
-    './assets/skybox/nx.png', // esquerda
-    './assets/skybox/py.png', // topo
-    './assets/skybox/ny.png', // base
-    './assets/skybox/pz.png', // frente
-    './assets/skybox/nz.png'  // trás
+  './assets/skybox/px.png', // direita
+  './assets/skybox/nx.png', // esquerda
+  './assets/skybox/py.png', // topo
+  './assets/skybox/ny.png', // base
+  './assets/skybox/pz.png', // frente
+  './assets/skybox/nz.png'  // trás
 ]);
 
 // Aplicando o cubemap como fundo da cena
@@ -428,11 +394,6 @@ const raycaster = new THREE.Raycaster();
 raycaster.far = 7;
 const pointer = new THREE.Vector2();
 
-function onPointerMove(event) {
-	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-}
-
 // Configuração da Música de Fundo e SFX de Remoção de Bloco
 const audioListener = new THREE.AudioListener();
 firstPersonCam.add(audioListener);
@@ -440,12 +401,12 @@ const audioLoader = new THREE.AudioLoader();
 const backgroundMusic = new THREE.Audio(audioListener);
 const removeSFX = new THREE.Audio(audioListener);
 
-audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer){
+audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer) {
   backgroundMusic.setBuffer(buffer);
   backgroundMusic.setLoop(true);
   backgroundMusic.setVolume(0.3);
 })
-audioLoader.load('./sfx/pop.mp3', function (buffer){
+audioLoader.load('./sfx/pop.mp3', function (buffer) {
   removeSFX.setBuffer(buffer);
   removeSFX.setLoop(false);
   removeSFX.setVolume(0.5);
@@ -458,11 +419,11 @@ document.addEventListener('click', (event) => {
       if (instanceId !== undefined) {
         selectedVoxel.setMatrixAt(instanceId, new THREE.Matrix4().makeTranslation(9999, 9999, 9999));
         selectedVoxel.instanceMatrix.needsUpdate = true;
-        const {x, z} = highlightBox.position
-        heightMatrix[x + mapSize][z + mapSize] -= 1; 
+        const { x, z } = highlightBox.position
+        heightMatrix[x + mapSize][z + mapSize] -= 1;
         removeSFX.play();
       }
-    } 
+    }
   }
 });
 
@@ -477,7 +438,7 @@ function render() {
   if (intersects.length > 0) {
     const instanceId = intersects[1]?.instanceId;
     selectedVoxel = intersects[1]?.object;
-    if(selectedVoxel?.isInstancedMesh){
+    if (selectedVoxel?.isInstancedMesh) {
       const position = new THREE.Vector3();
       const tMatrix = new THREE.Matrix4();
       selectedVoxel.getMatrixAt(instanceId, tMatrix);
@@ -485,7 +446,7 @@ function render() {
       highlightBox.position.copy(position);
       highlightBox.visible = true;
     }
-  }else{
+  } else {
     highlightBox.visible = false;
   }
   let delta = clock.getDelta();
@@ -499,4 +460,4 @@ function render() {
   renderer.render(scene, currentCamera);
   grassMesh.frustumCulled = true;
   stats.update();
-  }
+}
