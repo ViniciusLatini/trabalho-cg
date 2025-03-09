@@ -23,6 +23,40 @@ let firstPersonCam = new THREE.PerspectiveCamera(75, window.innerWidth / window.
 firstPersonCam.position.set(0, 15, 15);
 scene.add(firstPersonCam);
 currentCamera = firstPersonCam;
+const crosshair = document.getElementById('crosshair');
+crosshair.style.display = 'none';
+
+// Create the loading manager
+const loadingManager = new THREE.LoadingManager(() => {
+  let loadingScreen = document.getElementById( 'loading-screen' );
+  loadingScreen.transition = 0;
+  loadingScreen.style.setProperty('--speed1', '0');  
+  loadingScreen.style.setProperty('--speed2', '0');  
+  loadingScreen.style.setProperty('--speed3', '0');      
+
+  let button  = document.getElementById("myBtn")
+  button.style.backgroundColor = 'Green';
+  button.innerHTML = 'Enter';
+  button.addEventListener("click", onButtonPressed);
+});
+
+function onButtonPressed() {
+  const loadingScreen = document.getElementById( 'loading-screen' );
+  loadingScreen.transition = 0;
+  loadingScreen.classList.add( 'fade-out' );
+  loadingScreen.addEventListener( 'transitionend', (e) => {
+    const element = e.target;
+    element.remove();  
+  });  
+  // Play the background music
+  backgroundMusic.play();
+}
+
+function loadTexture(manager, object){
+  const loader = new THREE.TextureLoader(manager);
+  const loadedTexture = loader.load(object);
+  return loadedTexture;
+}
 
 const pointerLockControls = new PointerLockControls(firstPersonCam, renderer.domElement);
 scene.add(pointerLockControls.getObject()); // Add the camera to the scene
@@ -116,8 +150,6 @@ let mouseX = 0;
 let mouseY = 0;
 let isPointerLocked = false;
 
-const crosshair = document.getElementById('crosshair');
-
 document.addEventListener('mousedown', (event) => {
   if (event.button === 2) {
     characterController.jump();
@@ -154,9 +186,10 @@ const logSrc = './assets/log.png'
 const logTopSrc = './assets/log_top.png'
 
 function createIntanceMeshTexture(sideTextureSrc, topTextureSrc, bottomTextureSrc, amount) {
-  const sideTexture = textureLoader.load(sideTextureSrc);
-  const topTexture = textureLoader.load(topTextureSrc);
-  const bottomTexture = textureLoader.load(bottomTextureSrc);
+  
+  const sideTexture = loadTexture(loadingManager, sideTextureSrc);
+  const topTexture = loadTexture(loadingManager, topTextureSrc);
+  const bottomTexture = loadTexture(loadingManager, bottomTextureSrc);
   
   // Configurar as texturas
   sideTexture.wrapS = sideTexture.wrapT = THREE.RepeatWrapping;
@@ -250,7 +283,7 @@ async function loadTree(ref, idx) {
     const color = mesh.materials[0].color;
 
     if(color == 25600){
-      const leavesTexture = textureLoader.load(leavesSrc);
+      const leavesTexture = loadTexture(loadingManager, leavesSrc);
       leavesTexture.wrapS = leavesTexture.wrapT = THREE.RepeatWrapping;
       leavesTexture.encoding = THREE.sRGBEncoding;
       
@@ -276,8 +309,8 @@ async function loadTree(ref, idx) {
       group.add(leavesVoxel);
     }
     if(color == 6900535){
-      const logTexture = textureLoader.load(logSrc);
-      const logTopTexture = textureLoader.load(logTopSrc);
+      const logTexture = loadTexture(loadingManager, logSrc)
+      const logTopTexture = loadTexture(loadingManager, logTopSrc);
       const logMaterial = [
         new THREE.MeshLambertMaterial({ map: logTexture }), // Right
         new THREE.MeshLambertMaterial({ map: logTexture }), // Left
@@ -410,8 +443,7 @@ const removeSFX = new THREE.Audio(audioListener);
 audioLoader.load('./sfx/backgroundmusic.mp3', function (buffer){
   backgroundMusic.setBuffer(buffer);
   backgroundMusic.setLoop(true);
-  backgroundMusic.setVolume(0.4);
-  backgroundMusic.play();
+  backgroundMusic.setVolume(0.3);
 })
 audioLoader.load('./sfx/pop.mp3', function (buffer){
   removeSFX.setBuffer(buffer);
