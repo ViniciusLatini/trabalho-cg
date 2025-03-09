@@ -3,7 +3,6 @@ import { PointerLockControls } from '../build/jsm/controls/PointerLockControls.j
 import { OrbitControls } from '../build/jsm/controls/OrbitControls.js'; // Import OrbitControls
 import {
   initRenderer,
-  initDefaultBasicLight,
   onWindowResize,
 } from "../libs/util/util.js";
 import { SimplexNoise } from '../build/jsm/math/SimplexNoise.js';
@@ -83,12 +82,6 @@ function changeCamera() {
   }
 }
 
-const speed = 10;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-
 const keysPressed = {};
 window.addEventListener('keydown', (event) => {
   (keysPressed)[event.key.toLowerCase()] = true;
@@ -119,35 +112,11 @@ window.addEventListener('keyup', (event) => {
   (keysPressed)[event.key.toLowerCase()] = false;
 }, false);
 
-// Função para deslocar uma instância para baixo
-function moveInstanceDown(instancedMesh, instanceId, matrix) {
-  // Obtém a posição atual da instância
-  const position = new THREE.Vector3();
-  const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
-  matrix.decompose(position, quaternion, scale);
-
-  // Desloca a posição em 50 unidades para baixo no eixo Y
-  position.y -= 50;
-
-  // Cria uma nova matriz com a posição atualizada
-  const newMatrix = new THREE.Matrix4();
-  newMatrix.compose(position, quaternion, scale);
-
-  // Atualiza a matriz da instância na InstancedMesh
-  instancedMesh.setMatrixAt(instanceId, newMatrix);
-
-  // Marca a matriz de instâncias como necessitando de atualização
-  instancedMesh.instanceMatrix.needsUpdate = true;
-}
-
 const mapSize = 100;
 const heightMatrix = Array(mapSize * 2).fill().map(() => Array(mapSize * 2).fill(0));
 
 var characterController = new CharacterController(firstPersonCam, pointerLockControls, heightMatrix);
 
-let mouseX = 0;
-let mouseY = 0;
 let isPointerLocked = false;
 
 document.addEventListener('mousedown', (event) => {
@@ -177,7 +146,6 @@ document.getElementById("webgl-output").appendChild(stats.domElement);
 window.addEventListener('resize', function () { onWindowResize(currentCamera, renderer) }, false);
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-const textureLoader = new THREE.TextureLoader();
 const dirtSrc = './assets/dirt.png'
 const grassSideSrc = './assets/grass_block_side.png'
 const grassTopSrc = './assets/grass_block_top.png'
